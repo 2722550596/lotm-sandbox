@@ -401,7 +401,7 @@ export function collectUnrevealedSecretStrings(secrets: unknown): string[] {
 
     const sequenceValue = readUnrevealedValue(entry["sequenceSecret"], pickString);
     if (sequenceValue !== undefined) out.add(sequenceValue);
-
+    collectUnrevealedArrayValues(entry["beyonderSecrets"], out);
     collectUnrevealedArrayValues(entry["privateMotives"], out);
     collectUnrevealedArrayValues(entry["unrevealedAffiliations"], out);
   }

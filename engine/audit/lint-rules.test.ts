@@ -199,6 +199,10 @@ void test("collectUnrevealedSecretStrings extracts only unrevealed secrets", () 
           actorId: "alice",
           pathwaySecret: { value: "命运之轮", revealState: "hidden", revealConditions: [] },
           sequenceSecret: { value: "序列4", revealState: "revealed", revealConditions: [] },
+          beyonderSecrets: [
+            { value: "我有秘偶", revealState: "hidden", revealConditions: [] },
+            { value: "我在追踪罗塞尔", revealState: "revealed", revealConditions: [] },
+          ],
           privateMotives: [
             { value: "寻找失落的典籍", revealState: "hidden", revealConditions: [] },
           ],
@@ -210,7 +214,10 @@ void test("collectUnrevealedSecretStrings extracts only unrevealed secrets", () 
     },
   };
   const out = collectUnrevealedSecretStrings(secrets);
-  assert.deepEqual(out.toSorted(), ["命运之轮", "寻找失落的典籍", "神秘学会"].toSorted());
+  assert.deepEqual(
+    out.toSorted(),
+    ["命运之轮", "我有秘偶", "寻找失落的典籍", "神秘学会"].toSorted(),
+  );
 });
 
 void test("collectUnrevealedSecretStrings skips revealed secrets", () => {
