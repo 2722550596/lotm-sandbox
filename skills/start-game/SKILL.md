@@ -136,7 +136,7 @@ description: 开始/重新开始 LOTM lotm-sandbox。以流程机收集玩家立
 **顶层可选字段：**
 
 - `actorId: string` — protagonist 的 actor ID，留空默认为 `"protagonist"`。需要自定义 actor 标识时传入（如 `"klein_moretti"` 或 `"zhou_mingrui"`），必须与 `presence.presentActorIds` 一致。
-- `protagonist.abilities: {label:string, summary:string}[]` — 角色已知能力列表，每项含名称和简述。如 `[{"label": "基础格斗", "summary": "练过一些军体拳"}, {"label": "街头生存", "summary": "在廷根东区的流浪经验"}]`
+- `protagonist.abilities: {label:string, summary:string}[]` — 角色已知能力列表，每项含名称和简述。如 `[{"label": "基础格斗", "summary": "练过一些军体拳"}, {"label": "街头生存", "summary": "在廷根东区的流浪经验"}]`。普通人无自动填充，必须手动传。
 - `protagonist.ordinaryItems: string[]` — 起始随身物品，如 `["旧钱袋", "火柴"]`
 - `knownFacts: array` — 开局已知事实列表，每条含 `scope`（protagonist/npc/faction/world）+ `text`
 
@@ -173,6 +173,7 @@ description: 开始/重新开始 LOTM lotm-sandbox。以流程机收集玩家立
 **顶层可选字段：**
 
 - `actorId: string` — 同上节 human-protagonist 说明。
+- `protagonist.abilities` — **不需要传。** 系统会根据 `pathway` + `rank` 自动从序列9到目标序列累计生成能力条目，按 `label` 去重。只有在想覆盖系统数据时才传自己定义的 abilities。
   protagonist 非凡者序列规则：
 
 ```txt
