@@ -119,17 +119,6 @@ export const REVEAL_STATUSES = ["hidden", "suspected", "revealed"] as const;
 export const REVEAL_STATUS_SCHEMA = stringEnumSchema(REVEAL_STATUSES);
 export type RevealStatus = Static<typeof REVEAL_STATUS_SCHEMA>;
 
-// ---------------------------------------------------------------------------
-// Offscreen Event
-// ---------------------------------------------------------------------------
-
-export const OFFSCREEN_EVENT_VISIBILITIES = ["secret", "foreshadowed", "player-known"] as const;
-export const OFFSCREEN_EVENT_VISIBILITY_SCHEMA = stringEnumSchema(OFFSCREEN_EVENT_VISIBILITIES);
-export type OffscreenEventVisibility = Static<typeof OFFSCREEN_EVENT_VISIBILITY_SCHEMA>;
-
-export const OFFSCREEN_EVENT_SOURCES = ["parallel-line-subagent", "gm", "debug"] as const;
-export const OFFSCREEN_EVENT_SOURCE_SCHEMA = stringEnumSchema(OFFSCREEN_EVENT_SOURCES);
-export type OffscreenEventSource = Static<typeof OFFSCREEN_EVENT_SOURCE_SCHEMA>;
 
 // ---------------------------------------------------------------------------
 // Actor — LOTM 角色类型

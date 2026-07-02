@@ -88,11 +88,13 @@ function normalizeTurnCommitEvent(value: unknown, summary: string): TurnCommitEv
         ),
       };
     case "hint-secret":
+      // oxlint-disable-next-line no-unsafe-type-assertion
       return {
         kind: normalizedKind,
         event: extractDomainEvent(event, "hint-secret.event"),
       } as unknown as TurnCommitEvent;
     case "hook":
+      // oxlint-disable-next-line no-unsafe-type-assertion
       return {
         kind: normalizedKind,
         event: extractDomainEvent(event, "hook.event"),

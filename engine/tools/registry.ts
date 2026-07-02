@@ -12,7 +12,7 @@ import { updateActorConditionToolDefinition } from "./actor/update-actor-conditi
 import { updateActorImpressionToolDefinition } from "./actor/update-actor-impression.ts";
 import { updateActorOutfitToolDefinition } from "./actor/update-actor-outfit.ts";
 import { upsertActorToolDefinition } from "./actor/upsert-actor.ts";
-import { recordOffscreenEventToolDefinition } from "./backstage/record-offscreen-event.ts";
+import { manageUndercurrentToolDefinition } from "./backstage/manage-undercurrent.ts";
 import { adjustClockToolDefinition } from "./debug/adjust-clock.ts";
 import { clearBackstageLockToolDefinition } from "./debug/clear-backstage-lock.ts";
 import { clearObligationToolDefinition } from "./debug/clear-obligation.ts";
@@ -51,7 +51,7 @@ const TOOL_DEFINITIONS: readonly DomainToolDefinition[] = [
   getStatusToolDefinition,
   getStatusRawToolDefinition,
   recordMemoryToolDefinition,
-  recordOffscreenEventToolDefinition,
+  manageUndercurrentToolDefinition,
   retireActorToolDefinition,
   updateActorAgendaToolDefinition,
   recordActorKnowledgeToolDefinition,

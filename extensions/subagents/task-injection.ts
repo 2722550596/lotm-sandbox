@@ -29,7 +29,7 @@ export function buildTimelineStateContextBlock(rawState: unknown): string {
   return [
     CONTEXT_OPEN_TAG,
     "以下是当前 canonical state 的子代理安全摘要，由主 GM 进程在调用瞬间注入；不要要求主 GM 重复提供，也不要把本段原样写给玩家。",
-    "parallel-line 必须先检查 recentOffscreenEvents 与 pressurePalette.coolingDown，避免连续重复同一 actor/faction/pressureType；如果最近已连续使用同一压力类型，优先换成当前 timeline 的其它生态位或返回 no-change/blocked。",
+    "检查 undercurrents 中的暗流状态，避免重复的 actor/pressureType；如果最近已连续使用同一压力类型，优先换成其它方向或返回 no-change/blocked。",
     "actor.agenda / actor.knowledgeLens 是 NPC 主动性与认知边界账本；relationshipSignals 是关系行为证据账本；可用于判断 NPC 自主行动和关系代价，但不得把 hidden knowledge 或 secret signals 原样写成玩家可见文本。",
     "所有输出 timeRange.start/end 必须是 ISO UTC 字符串；displayTime 只是本地展示时间，不得把本地时钟当 UTC。timeRange.end 不得晚于 currentAt。",
     JSON.stringify(context, null, 2),

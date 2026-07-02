@@ -29,7 +29,7 @@ Give a narrow input, not the full main state:
 ## Landing flow
 
 1. Read the subagent's JSON output.
-2. Write only approved backstage facts through `record_offscreen_event`.
+2. Write only approved backstage facts through `manage_undercurrent`.
 3. `visibility` may be only `secret` or `foreshadowed`.
 4. Rewrite player-visible material as traces, rumors, dreams, abnormal actions, or aftermath. Do not show `privateSummary` directly.
 

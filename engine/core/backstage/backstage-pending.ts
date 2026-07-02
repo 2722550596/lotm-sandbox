@@ -6,7 +6,7 @@
  * duns it on every canonical commit, and resolve_backstage_line REFUSES to declare
  * no-change/blocked while an unharvested run sits ready — so a produced candidate
  * cannot be silently discarded by a forgetful "no-change". Landing a candidate
- * (record_offscreen_event) also clears the marker for that line.
+: * (manage_undercurrent) also clears the marker for that line.
  */
 
 import type { BackstagePendingHarvest, State } from "../state/state.ts";
@@ -74,7 +74,7 @@ function formatUnharvestedPending(pending: readonly BackstagePendingHarvest[]): 
     "有已起飞但尚未 harvest 的后台 director run，拒绝 resolve_backstage_line（避免把已产出的候选当 no-change 丢弃）：",
     ...pending.map((entry) => `- run_id=${entry.runId}（line ${entry.lineId}）`),
     "先 harvest_backstage_candidate(run_id) 取回候选审查：",
-    "- 有 progress/escalation → record_offscreen_event 落地；",
+    "- 有 progress/escalation → manage_undercurrent 落地；",
     "- 审查后确属 no-change/blocked → harvest 已清掉该 run 的 pending，再 resolve_backstage_line。",
   ].join("\n");
 }
@@ -85,6 +85,6 @@ export function formatPendingHarvestReminder(draft: State): string | null {
   if (pending.length === 0) {
     return null;
   }
-  const runs = pending.map((entry) => `${entry.runId}（line ${entry.lineId}）`).join("、");
-  return `⏳ 后台 director 已起、候选待 harvest：${runs}。隔轮用 run_id 调 harvest_backstage_candidate 取回审查后落地（record_offscreen_event）或清账（resolve_backstage_line）。`;
+  const runs = pending.map((entry) => `${entry.runId}（${entry.lineId}）`).join("、");
+  return `⏳ 后台 director 已起、候选待 harvest：${runs}。隔轮用 run_id 调 harvest_backstage_candidate 取回审查后落地（manage_undercurrent）或清账（resolve_backstage_line）。`;
 }

@@ -1,7 +1,5 @@
-import type { TimelinePressureSlot } from "../../../data/timeline-pressure-palettes.ts";
 import type { TimeZoneId, TimelineId } from "./state.ts";
 
-import { getTimelinePressureSlots } from "../../../data/timeline-pressure-palettes.ts";
 import { formatHumanTime } from "./date-time.ts";
 import { TIMELINE_IDS, TIMEZONE_IDS } from "./state-enum-schemas.ts";
 import { isRecord } from "../utils/typebox-validation.ts";
@@ -27,9 +25,8 @@ export interface TimelineStateContext {
   };
   actors: TimelineActorContext[];
   relationshipSignals: TimelineRelationshipSignalContext[];
-  recentOffscreenEvents: TimelineOffscreenEventContext[];
+  undercurrents: string[];
   recentSecretEvents: TimelineSecretEventContext[];
-  pressurePalette: TimelinePressureSlotContext[];
 }
 
 export interface TimelineActorContext {
@@ -57,16 +54,6 @@ export interface TimelineActorKnowledgeLensContext {
   forbiddenKnowledge: string[];
 }
 
-export interface TimelineOffscreenEventContext {
-  lineId: string;
-  actorIds: string[];
-  timeRange: { start: string; end: string };
-  visibility: string;
-  pressureType: string;
-  summary: string;
-  consequences: string[];
-  futureHooks: string[];
-}
 
 export interface TimelineRelationshipSignalContext {
   id: string;
@@ -79,10 +66,6 @@ export interface TimelineRelationshipSignalContext {
   visibility: string;
 }
 
-export interface TimelinePressureSlotContext extends TimelinePressureSlot {
-  recentUses: number;
-  coolingDown: boolean;
-}
 
 export interface TimelineSecretEventContext {
   time: string;
@@ -90,7 +73,6 @@ export interface TimelineSecretEventContext {
   actorIds: string[];
 }
 
-const RECENT_OFFSCREEN_LIMIT = 6;
 const RECENT_SECRET_LIMIT = 6;
 const RECENT_RELATIONSHIP_SIGNAL_LIMIT = 8;
 
@@ -102,7 +84,6 @@ export function buildTimelineStateContextFromRaw(raw: unknown): TimelineStateCon
   const clock = requireRecord(publicState["clock"], "public.clock");
   const scene = requireRecord(publicState["scene"], "public.scene");
   const actors = requireRecord(publicState["actors"], "public.actors");
-  const offscreenEventLog = optionalArray(secrets["offscreenEventLog"]);
   const secretEventLog = optionalArray(secrets["secretEventLog"]);
   const relationshipSignals = recentRelationshipSignals(
     optionalArray(publicState["relationshipSignals"]),
@@ -115,14 +96,20 @@ export function buildTimelineStateContextFromRaw(raw: unknown): TimelineStateCon
   const timezone = requireTimezone(clock["timezone"], "clock.timezone");
   const displayTime = formatHumanTime(currentAt, timezone).display;
   const timeline = requireTimelineId(scenario["timeline"], "scenario.timeline");
-  const recentOffscreenEvents = offscreenEventLog
-    .slice(-RECENT_OFFSCREEN_LIMIT)
-    .map((event, index) => offscreenEventContext(event, index));
 
   const recentSecretEvents = secretEventLog
     .slice(-RECENT_SECRET_LIMIT)
     .map((event, index) => secretEventContext(event, index));
 
+  const undercurrents: string[] = optionalArray(secrets["undercurrents"]).map((u) => {
+    const r = requireRecord(u, "undercurrents[]");
+    const label = requireString(r["label"], "undercurrent.label");
+    const filled = requireString(String(r["filled"] ?? ""), "undercurrent.filled");
+    const size = requireString(String(r["size"] ?? ""), "undercurrent.size");
+    const actorIds = stringArray(r["actorIds"], "undercurrent.actorIds");
+    const visibility = requireString(r["visibility"], "undercurrent.visibility");
+    return `${label} [${filled}/${size}] · actor:${actorIds.join(", ")} · ${visibility}`;
+  });
   return {
     currentAt,
     currentAtUtc: currentAt,
@@ -146,9 +133,8 @@ export function buildTimelineStateContextFromRaw(raw: unknown): TimelineStateCon
       actorContext(actorId, actor, actorAgendas.get(actorId), actorKnowledgeLenses.get(actorId)),
     ),
     relationshipSignals,
-    recentOffscreenEvents,
     recentSecretEvents,
-    pressurePalette: buildPressurePaletteContext(timeline, recentOffscreenEvents),
+    undercurrents,
   };
 }
 
@@ -246,25 +232,6 @@ function relationshipSignalOrder(id: string): number {
   return match === null ? 0 : Number(match[1]);
 }
 
-function offscreenEventContext(value: unknown, index: number): TimelineOffscreenEventContext {
-  const event = requireRecord(value, `offscreenEventLog[${index}]`);
-  const timeRange = requireRecord(event["timeRange"], `offscreenEventLog[${index}].timeRange`);
-  const actorIds = stringArray(event["actorIds"], `offscreenEventLog[${index}].actorIds`);
-  const summary = requireString(event["summary"], `offscreenEventLog[${index}].summary`);
-  return {
-    lineId: requireString(event["lineId"], `offscreenEventLog[${index}].lineId`),
-    actorIds,
-    timeRange: {
-      start: requireString(timeRange["start"], `offscreenEventLog[${index}].timeRange.start`),
-      end: requireString(timeRange["end"], `offscreenEventLog[${index}].timeRange.end`),
-    },
-    visibility: requireString(event["visibility"], `offscreenEventLog[${index}].visibility`),
-    pressureType: requireString(event["pressureType"], `offscreenEventLog[${index}].pressureType`),
-    summary,
-    consequences: stringArray(event["consequences"], `offscreenEventLog[${index}].consequences`),
-    futureHooks: stringArray(event["futureHooks"], `offscreenEventLog[${index}].futureHooks`),
-  };
-}
 
 function secretEventContext(value: unknown, index: number): TimelineSecretEventContext {
   const event = requireRecord(value, `secretEventLog[${index}]`);
@@ -297,29 +264,7 @@ function formatThreats(values: readonly unknown[]): string[] {
   });
 }
 
-function buildPressurePaletteContext(
-  timeline: TimelineId,
-  recentEvents: readonly TimelineOffscreenEventContext[],
-): TimelinePressureSlotContext[] {
-  const recentPressureTypes = recentEvents.map((event) => event.pressureType);
-  return getTimelinePressureSlots(timeline).map((slot) => ({
-    ...slot,
-    recentUses: recentPressureTypes.filter((pressureType) => pressureType === slot.pressureType)
-      .length,
-    coolingDown: isCoolingDown(slot, recentPressureTypes),
-  }));
-}
 
-function isCoolingDown(
-  slot: TimelinePressureSlot,
-  recentPressureTypes: readonly string[],
-): boolean {
-  if (slot.cooldownTurns <= 0) {
-    return false;
-  }
-  const windowStart = Math.max(0, recentPressureTypes.length - slot.cooldownTurns);
-  return recentPressureTypes.slice(windowStart).includes(slot.pressureType);
-}
 
 function facetByActorId(
   actorStates: Record<string, unknown>,

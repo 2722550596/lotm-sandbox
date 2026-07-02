@@ -9,7 +9,7 @@ import type { OutfitState, State, TurnTimePolicy } from "../state/state.ts";
 import { findSecretSlot, collectAllSecretIds } from "../../tools/knowledge/hint-secret.ts";
 import { updateActorCondition } from "../actor/actor-condition.ts";
 import { changeActorOutfit } from "../actor/actor-impression.ts";
-import { collectBackstageDueNotices } from "../backstage/faction-clock.ts";
+import { collectBackstageDueNotices } from "../backstage/undercurrent.ts";
 import { updateEconomy } from "../economy/economy.ts";
 import { applyTrackedItemEvent } from "../inventory/tracked-item.ts";
 import { recordMemory } from "../knowledge/memory.ts";
@@ -205,6 +205,8 @@ function applyHookEvent(draft: State, event: HookCommitEvent): { message: string
     case "retire":
       retireHook(draft, event.hookId, event.reason);
       return { message: `hook ${event.hookId} 已退场` };
+    default:
+      throw new Error(`未处理的 hook kind`);
   }
 }
 
@@ -222,9 +224,9 @@ function collectPacingWarnings(input: TurnCommitInput): string[] {
       "叙事节奏提醒：这一轮你提交了 6 个以上的领域事件（scene / economy / memory / actor-condition 等状态变更），已经比较饱满了。\n接下来请不要再继续推进新的前台场景冲突——先把这轮已有的操作后果写清楚：\n- 角色的行动意图得到了什么结果？\n- 付出了什么代价、消耗了什么资源？\n- NPC 对当前发生的事有什么反应（对白、态度、沉默或行动）？\n- 场景里自然浮现出了什么新的局面，让玩家知道接下来可以往哪走？\n\n让当前这轮的内容沉淀下来，不要急着把下一场冲突也塞进同一轮里。",
     );
   }
-  if (input.time.elapsedMinutes > 30) {
+  if (input.time.elapsedMinutes >= 120) {
     warnings.push(
-      "叙事节奏提醒：这一轮的游戏内时间推进了 30 分钟以上，时间跨度已经不小了。在这么长的一段游戏时间里，很多细节可能已经被跳过。\n接下来，除了必要的幕后记录（比如记录 offscreen 事件——这些是「世界在玩家视野之外发生的事」）以外，请不要继续推进新的前台场景冲突了。\n让这 30 分钟里发生的事情在叙事中充分展开：角色经历了什么、环境有什么变化、NPC 之间有什么暗流在涌动。不要急着跳过细节去赶下一场戏。",
+      "叙事节奏提醒：这一轮的游戏内时间推进了 120 分钟以上，时间跨度相当大。在这么长的一段游戏时间里，很多细节可能已经被跳过。\n接下来，除了必要的幕后记录（比如记录 offscreen 事件——这些是「世界在玩家视野之外发生的事」）以外，请不要继续推进新的前台场景冲突了。\n让这 120 分钟里发生的事情在叙事中充分展开：角色经历了什么、环境有什么变化、NPC 之间有什么暗流在涌动。不要急着跳过细节去赶下一场戏。",
     );
   }
   return warnings;

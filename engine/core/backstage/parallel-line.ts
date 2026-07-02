@@ -1,13 +1,4 @@
-import type {
-  OffscreenEventSource,
-  OffscreenEventVisibility,
-  TimelineId,
-} from "../state/state-enum-schemas.ts";
-
-export type {
-  OffscreenEventSource,
-  OffscreenEventVisibility,
-} from "../state/state-enum-schemas.ts";
+import type { TimelineId } from "../state/state-enum-schemas.ts";
 
 export type ParallelLineOutcome = "no-change" | "progress" | "escalation" | "blocked";
 
@@ -16,30 +7,10 @@ export interface ParallelLineTimeWindow {
   end: string;
 }
 
-export interface ParallelLinePressureSlotHint {
-  id: string;
-  label: string;
-  pressureType: string;
-  actorOrFactionHints: string[];
-  playerSafeProjectionKinds: string[];
-  cooldownTurns: number;
-  recentUses?: number;
-  coolingDown?: boolean;
-  forbiddenWhen: string[];
-}
-
-export interface ParallelLineRecentEvent {
-  lineId: string;
-  actorIds: string[];
-  pressureType: string;
-  summary: string;
-}
-
 export interface ParallelLineInput {
   lineId: string;
   timelineId: TimelineId;
   genreContract: string;
-  activePressurePalette: ParallelLinePressureSlotHint[];
   timeWindow: ParallelLineTimeWindow;
   currentArc: string;
   currentBeat: string;
@@ -50,7 +21,6 @@ export interface ParallelLineInput {
   actorGoals: string[];
   previousLineState: string;
   playerSideSummary: string;
-  recentOffscreenEvents?: ParallelLineRecentEvent[];
   excludedActorIds?: string[];
   excludedPressureTypes?: string[];
   preferredPressureType?: string;
@@ -74,20 +44,4 @@ export interface ParallelLineOutput {
   genreFitNotes: string[];
   riskFlags: string[];
   optionalNarrativeSnippet: string | null;
-}
-
-export interface OffscreenEvent {
-  id: string;
-  lineId: string;
-  actorIds: string[];
-  timeRange: ParallelLineTimeWindow;
-  visibility: OffscreenEventVisibility;
-  summary: string;
-  consequences: string[];
-  futureHooks: string[];
-  createdFrom: OffscreenEventSource;
-  /** canonical 后台压力类型（来自 pressure palette slot 或分类器），驱动 cooldown/多样性纪律 */
-  pressureType: string;
-  /** 来源 pressure palette slot id；无对应 slot 时为 null */
-  pressureSlotId: string | null;
 }

@@ -4,12 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createInitialState, PROTAGONIST_ACTOR_ID } from "../init/initial-state.ts";
-import {
-  configureSecret,
-  getOffscreenEventsForDebug,
-  privateResolve,
-  revealSecret,
-} from "./secrets.ts";
+import { configureSecret, privateResolve, revealSecret } from "./secrets.ts";
 
 function setupActorSequence(draft: ReturnType<typeof createInitialState>): void {
   // oxlint-disable-next-line no-unsafe-type-assertion
@@ -431,15 +426,4 @@ void test("privateResolve secret-compatibility returns no-special-effect without
   });
 
   assert.equal(result.outcome, "no-special-effect");
-});
-
-// ===========================================================================
-// getOffscreenEventsForDebug
-// ===========================================================================
-
-void test("getOffscreenEventsForDebug returns offscreen event log", () => {
-  const draft = createInitialState();
-
-  const events = getOffscreenEventsForDebug(draft);
-  assert.ok(Array.isArray(events));
 });

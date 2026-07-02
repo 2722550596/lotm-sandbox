@@ -60,7 +60,7 @@ export const adjustClockToolDefinition: DomainToolDefinition = {
     "游戏时钟与叙事时间脱节时使用（如机械时间停留在周四，但叙事已推进至周六），" +
     "把时钟对齐到叙事当前时间点。\n\n" +
     "使用边界：\n" +
-    "- 时钟落后于叙事进度，导致 record_offscreen_event 报错「未来事件」\n" +
+    "- 时钟落后于叙事进度，导致 manage_undercurrent 报错「未来事件」\n" +
     "- 多轮 elapsedMinutes 累积误差超过了半小时\n" +
     "- 发现上一轮的 elapsedMinutes 填错了\n\n" +
     "禁区：\n" +

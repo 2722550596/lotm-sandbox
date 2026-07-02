@@ -1,4 +1,3 @@
-import type { OffscreenEvent } from "../backstage/parallel-line.ts";
 import type {
   MemoryFactScope,
   OpeningMode,
@@ -22,19 +21,6 @@ import type {
 } from "./state-enum-schemas.ts";
 import type { CurrencyType } from "../economy/economy-schema.ts";
 import type { DailyEventKind, MemoryClaim } from "../knowledge/memory-schema.ts";
-
-export type {
-  OffscreenEvent,
-  OffscreenEventSource,
-  OffscreenEventVisibility,
-  ParallelLineInput,
-  ParallelLineOutput,
-  ParallelLineOutcome,
-  ParallelLinePressureSlotHint,
-  ParallelLineRecentEvent,
-  ParallelLineTimeWindow,
-  ParallelLineToneDriftRisk,
-} from "../backstage/parallel-line.ts";
 
 export type {
   ActorKind,
@@ -139,8 +125,7 @@ export interface SecretGameState {
   actorStates: Record<ActorId, SecretActorState>;
   hiddenWorldFacts: HiddenWorldFact[];
   secretEventLog: SecretEventMemory[];
-  offscreenEventLog: OffscreenEvent[];
-  factionClocks: FactionClock[];
+  undercurrents: Undercurrent[];
   scheduledEvents: ScheduledEvent[];
   relationshipSignals: RelationshipSignal[];
   backstageObligations: BackstageObligation[];
@@ -215,13 +200,16 @@ export interface RelationshipSignal {
   visibility: RelationshipSignalVisibility;
 }
 
-export interface FactionClock {
+export interface Undercurrent {
   id: string;
-  factionId: string;
+  actorIds: string[];
   label: string;
   filled: number;
   size: number;
-  visibility: "hidden" | "leaked";
+  visibility: "secret" | "foreshadowed";
+  pressureType: string;
+  futureHook: string;
+  lastChangedAt: string;
 }
 
 export interface ScheduledEvent {

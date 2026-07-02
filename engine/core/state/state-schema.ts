@@ -13,8 +13,6 @@ import {
   INTENSITY_LEVEL_SCHEMA,
   MEMORY_SCOPE_SCHEMA,
   NARRATIVE_WEIGHT_LEVEL_SCHEMA,
-  OFFSCREEN_EVENT_SOURCE_SCHEMA,
-  OFFSCREEN_EVENT_VISIBILITY_SCHEMA,
   OPENING_MODE_SCHEMA,
   PATHWAY_ID_SCHEMA,
   PROMOTION_SYSTEM_SCHEMA,
@@ -467,29 +465,18 @@ const SECRET_EVENT_MEMORY_SCHEMA = Type.Object({
   relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
 });
 
-const OFFSCREEN_EVENT_SCHEMA = Type.Object({
+export const UNDERCURRENT_VISIBILITIES = ["secret", "foreshadowed"] as const;
+
+const UNDERCURRENT_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
-  lineId: NON_EMPTY_STRING_SCHEMA,
   actorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  timeRange: Type.Object({ start: ISO_INSTANT_SCHEMA, end: ISO_INSTANT_SCHEMA }),
-  visibility: OFFSCREEN_EVENT_VISIBILITY_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  consequences: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  futureHooks: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  createdFrom: OFFSCREEN_EVENT_SOURCE_SCHEMA,
-  pressureType: NON_EMPTY_STRING_SCHEMA,
-  pressureSlotId: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-export const FACTION_CLOCK_VISIBILITIES = ["hidden", "leaked"] as const;
-
-const FACTION_CLOCK_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  factionId: NON_EMPTY_STRING_SCHEMA,
   label: NON_EMPTY_STRING_SCHEMA,
   filled: NON_NEGATIVE_INTEGER_SCHEMA,
   size: Type.Integer({ minimum: 2, maximum: 12 }),
-  visibility: stringEnumSchema(FACTION_CLOCK_VISIBILITIES),
+  visibility: stringEnumSchema(UNDERCURRENT_VISIBILITIES),
+  pressureType: NON_EMPTY_STRING_SCHEMA,
+  futureHook: NON_EMPTY_STRING_SCHEMA,
+  lastChangedAt: ISO_INSTANT_SCHEMA,
 });
 
 const SCHEDULED_EVENT_SCHEMA = Type.Object({
@@ -547,8 +534,7 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   actorStates: Type.Record(Type.String(), SECRET_ACTOR_STATE_SCHEMA),
   hiddenWorldFacts: Type.Array(HIDDEN_WORLD_FACT_SCHEMA),
   secretEventLog: Type.Array(SECRET_EVENT_MEMORY_SCHEMA),
-  offscreenEventLog: Type.Array(OFFSCREEN_EVENT_SCHEMA),
-  factionClocks: Type.Array(FACTION_CLOCK_SCHEMA),
+  undercurrents: Type.Array(UNDERCURRENT_SCHEMA),
   scheduledEvents: Type.Array(SCHEDULED_EVENT_SCHEMA),
   relationshipSignals: Type.Array(RELATIONSHIP_SIGNAL_SCHEMA),
   backstageObligations: Type.Array(BACKSTAGE_OBLIGATION_SCHEMA),
@@ -592,10 +578,6 @@ function applyDeserializationDefaults(value: unknown): unknown {
   if (!isRecord(value)) {
     return value;
   }
-  const secrets = value["secrets"];
-  if (isRecord(secrets) && secrets["offscreenEventLog"] === undefined) {
-    secrets["offscreenEventLog"] = [];
-  }
   return value;
 }
 
@@ -638,13 +620,6 @@ function normalizeStateDatesInPlace(state: State): void {
   for (const event of state.secrets.secretEventLog) {
     event.time = normalizeIsoInstant(event.time, "secretEvent.time");
   }
-  for (const event of state.secrets.offscreenEventLog) {
-    event.timeRange.start = normalizeIsoInstant(
-      event.timeRange.start,
-      "offscreenEvent.timeRange.start",
-    );
-    event.timeRange.end = normalizeIsoInstant(event.timeRange.end, "offscreenEvent.timeRange.end");
-  }
 
   for (const bundle of Object.values(state.secrets.actorStates)) {
     const agenda = bundle.agenda;
@@ -668,14 +643,14 @@ function assertStateInvariants(state: State): void {
   assertSecretActorStateInvariants(state, actors);
   assertRelationshipSignalInvariants(state, actors);
   assertActorImpressionInvariants(state, actors);
-  assertFactionClockInvariants(state);
+  assertUndercurrentInvariants(state);
 }
 
-function assertFactionClockInvariants(state: State): void {
-  for (const clock of state.secrets.factionClocks) {
+function assertUndercurrentInvariants(state: State): void {
+  for (const clock of state.secrets.undercurrents) {
     if (clock.filled > clock.size) {
       throw new Error(
-        `非法 faction clock ${clock.id}: filled(${clock.filled}) 不能大于 size(${clock.size})。`,
+        `非法 undercurrent ${clock.id}: filled(${clock.filled}) 不能大于 size(${clock.size})。`,
       );
     }
   }

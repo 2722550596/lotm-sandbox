@@ -2,7 +2,6 @@ import type {
   ActorId,
   ActorSecretSlots,
   HiddenWorldFact,
-  OffscreenEvent,
   SecretSlot,
   State,
 } from "../state/state.ts";
@@ -544,7 +543,3 @@ async function secretCompatibility(
 // ===========================================================================
 // Debug helpers
 // ===========================================================================
-
-export function getOffscreenEventsForDebug(state: State): readonly OffscreenEvent[] {
-  return state.secrets.offscreenEventLog;
-}

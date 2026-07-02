@@ -1,5 +1,5 @@
 {
-  "nextId": 113,
+  "nextId": 118,
   "items": [
     {
       "id": 1,
@@ -642,6 +642,36 @@
       "content": "检查 test 覆盖",
       "done": true,
       "created": 1782974686
+    },
+    {
+      "id": 113,
+      "content": "Phase 1: State layer — state.ts, state-schema.ts, initial-state.ts",
+      "done": true,
+      "created": 1782975921
+    },
+    {
+      "id": 114,
+      "content": "Phase 2: Memory logic — memory-schema.ts, memory.ts",
+      "done": true,
+      "created": 1782975921
+    },
+    {
+      "id": 115,
+      "content": "Phase 3: Tools & Recall — record-memory.ts, recall-memory.ts, commit-turn.ts, memory-recall.ts, public-projection.ts",
+      "done": true,
+      "created": 1782975921
+    },
+    {
+      "id": 116,
+      "content": "Phase 4: Tests — memory.test.ts, memory-recall.test.ts",
+      "done": true,
+      "created": 1782975921
+    },
+    {
+      "id": 117,
+      "content": "Phase 5: Format, typecheck, lint, test pass",
+      "done": true,
+      "created": 1782975921
     }
   ]
 }

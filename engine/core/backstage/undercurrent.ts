@@ -1,15 +1,16 @@
 /**
- * 阵营时钟与到期义务（backlog #3，BITD 进度钟）。
+ * 潜流与到期义务（backlog #3，BITD 进度钟）。
  *
  * 「世界不为玩家暂停」从 prompt 自觉变成机械载体：幕后势力的推进记在
- * secret state 的 factionClocks / scheduledEvents 里；canonical commit
- * 推进时间越过 dueAt 或时钟填满时，工具返回值直接催账——GM 不需要记得。
+ * secret state 的 undercurrents / scheduledEvents 里；canonical commit
+ * 推进时间越过 dueAt 或潜流填满时，工具返回值直接催账——GM 不需要记得。
  */
 
-import type { FactionClock, ScheduledEvent, State } from "../state/state.ts";
+import type { Undercurrent, ScheduledEvent, State } from "../state/state.ts";
 
 import { Temporal } from "@js-temporal/polyfill";
 
+import { openHook } from "../ledger/hooks.ts";
 import { resolveRelativeTime } from "../state/date-time.ts";
 import { createId } from "../utils/ids.ts";
 import {
@@ -18,91 +19,134 @@ import {
   assertNonNegativeInteger,
 } from "../utils/typebox-validation.ts";
 
-export interface UpsertFactionClockInput {
+export interface UndercurrentInput {
   clockId?: string;
-  factionId: string;
+  actorIds: string[];
   label: string;
   size: number;
-  visibility: FactionClock["visibility"];
+  visibility: Undercurrent["visibility"];
+  pressureType: string;
+  futureHook: string;
 }
 
-export function upsertFactionClock(draft: State, input: UpsertFactionClockInput): FactionClock {
+export function brewUndercurrent(draft: State, input: UndercurrentInput): Undercurrent {
   const size = assertNonNegativeInteger(input.size, "size");
   if (size < 2 || size > 12) {
-    throw new Error(`非法 size: ${size}。faction clock 大小必须在 2-12 之间。`);
+    throw new Error(`非法 size: ${size}。undercurrent 大小必须在 2-12 之间。`);
   }
-  const factionId = assertNonEmptyString(input.factionId, "factionId");
   const label = assertNonEmptyString(input.label, "label");
 
   const existing =
     input.clockId === undefined
       ? undefined
-      : draft.secrets.factionClocks.find((clock) => clock.id === input.clockId);
+      : draft.secrets.undercurrents.find((uc) => uc.id === input.clockId);
   if (existing !== undefined) {
-    existing.factionId = factionId;
+    existing.actorIds = input.actorIds;
     existing.label = label;
     existing.size = size;
     existing.visibility = input.visibility;
+    existing.pressureType = input.pressureType;
+    existing.futureHook = input.futureHook;
+    existing.lastChangedAt = draft.public.clock.currentAt;
     if (existing.filled > size) existing.filled = size;
     return existing;
   }
-  const clock: FactionClock = {
-    id: input.clockId ?? createId(draft, "faction-clock"),
-    factionId,
+  const undercurrent: Undercurrent = {
+    id: input.clockId ?? createId(draft, "undercurrent"),
+    actorIds: input.actorIds,
     label,
     filled: 0,
     size,
     visibility: input.visibility,
+    pressureType: input.pressureType,
+    futureHook: input.futureHook,
+    lastChangedAt: draft.public.clock.currentAt,
   };
-  draft.secrets.factionClocks.push(clock);
-  return clock;
+  draft.secrets.undercurrents.push(undercurrent);
+  return undercurrent;
 }
 
-export interface AdvanceFactionClockResult {
-  clock: FactionClock;
+export interface AdvanceUndercurrentResult {
+  clock: Undercurrent;
   becameFull: boolean;
 }
 
-export function advanceFactionClock(
+export function advanceUndercurrent(
   draft: State,
-  clockId: string,
+  undercurrentId: string,
   ticks: number,
   reason: string,
-): AdvanceFactionClockResult {
+): AdvanceUndercurrentResult {
   assertNonEmptyString(reason, "reason");
   const ticksValue = assertNonNegativeInteger(ticks, "ticks");
   if (ticksValue === 0) {
-    throw new Error("ticks 必须大于 0；不推进就不要调用 advance-clock。");
+    throw new Error("ticks 必须大于 0；不推进就不要调用 advance-undercurrent。");
   }
-  const clock = requireClock(draft, clockId);
-  const wasFull = clock.filled >= clock.size;
-  clock.filled = Math.min(clock.size, clock.filled + ticksValue);
-  return { clock, becameFull: !wasFull && clock.filled >= clock.size };
+  const uc = requireUndercurrent(draft, undercurrentId);
+  const wasFull = uc.filled >= uc.size;
+  uc.filled = Math.min(uc.size, uc.filled + ticksValue);
+  uc.lastChangedAt = draft.public.clock.currentAt;
+  return { clock: uc, becameFull: !wasFull && uc.filled >= uc.size };
 }
 
-/** 时钟填满兑现格局变化后归零；outcomeSummary 记入 secretEventLog 留痕。 */
-export function resetFactionClock(
+export function manifestUndercurrent(
   draft: State,
-  clockId: string,
-  outcomeSummary: string,
-): FactionClock {
-  const summary = assertNonEmptyString(outcomeSummary, "outcomeSummary");
-  const clock = requireClock(draft, clockId);
+  undercurrentId: string,
+  summary: string,
+): Undercurrent {
+  const summaryValue = assertNonEmptyString(summary, "summary");
+  const uc = requireUndercurrent(draft, undercurrentId);
+  if (uc.futureHook) {
+    openHook(draft, uc.futureHook, undercurrentId);
+  }
   draft.secrets.secretEventLog.push({
     id: createId(draft, "secret-event"),
     time: draft.public.clock.currentAt,
-    summary: `[faction-clock:${clock.label}] ${summary}`,
+    summary: `[undercurrent:${uc.label}] ${summaryValue}`,
     relatedActorIds: [],
   });
-  clock.filled = 0;
-  return clock;
+  draft.secrets.undercurrents = draft.secrets.undercurrents.filter(
+    (entry) => entry.id !== undercurrentId,
+  );
+  return uc;
 }
 
-export function retireFactionClock(draft: State, clockId: string, reason: string): FactionClock {
-  assertNonEmptyString(reason, "reason");
-  const clock = requireClock(draft, clockId);
-  draft.secrets.factionClocks = draft.secrets.factionClocks.filter((entry) => entry.id !== clockId);
-  return clock;
+export function disruptUndercurrent(
+  draft: State,
+  undercurrentId: string,
+  reason: string,
+): Undercurrent {
+  const reasonValue = assertNonEmptyString(reason, "reason");
+  const uc = requireUndercurrent(draft, undercurrentId);
+  draft.secrets.secretEventLog.push({
+    id: createId(draft, "secret-event"),
+    time: draft.public.clock.currentAt,
+    summary: `[undercurrent:${uc.label}] ${reasonValue}`,
+    relatedActorIds: [],
+  });
+  draft.secrets.undercurrents = draft.secrets.undercurrents.filter(
+    (entry) => entry.id !== undercurrentId,
+  );
+  return uc;
+}
+
+export function subsideUndercurrent(
+  draft: State,
+  undercurrentId: string,
+  reason: string,
+): Undercurrent {
+  const reasonValue = assertNonEmptyString(reason, "reason");
+  const uc = requireUndercurrent(draft, undercurrentId);
+  draft.secrets.secretEventLog.push({
+    id: createId(draft, "secret-event"),
+    time: draft.public.clock.currentAt,
+    summary: `[undercurrent:${uc.label}] ${reasonValue}`,
+    relatedActorIds: [],
+  });
+  draft.secrets.undercurrents = draft.secrets.undercurrents.filter(
+    (entry) => entry.id !== undercurrentId,
+  );
+  return uc;
 }
 
 export function scheduleEvent(draft: State, dueAt: string, summary: string): ScheduledEvent {
@@ -163,8 +207,8 @@ export function extendScheduledEvent(
 }
 
 /**
- * canonical commit 的催账清单：已到期的 scheduledEvents + 已填满的时钟。
- * 只生成提醒文本，不改 state——到期处理必须走 manage_faction_clock 显式动作。
+ * canonical commit 的催账清单：已到期的 scheduledEvents + 已填满的潜流。
+ * 只生成提醒文本，不改 state——到期处理必须走 manage_undercurrent 显式动作。
  */
 export function collectBackstageDueNotices(draft: State): string[] {
   const now = currentInstant(draft);
@@ -176,24 +220,24 @@ export function collectBackstageDueNotices(draft: State): string[] {
       );
     }
   }
-  for (const clock of draft.secrets.factionClocks) {
-    if (clock.filled >= clock.size) {
+  for (const uc of draft.secrets.undercurrents) {
+    if (uc.filled >= uc.size) {
       notices.push(
-        `⏰ 阵营时钟已填满（${clock.id}｜${clock.label}）：必须兑现一次格局变化，然后 reset-clock 或 retire-clock。`,
+        `⏰ 潜流已填满（${uc.id}｜${uc.label}）：必须兑现一次格局变化，然后 manifest/disrupt/subsidence。`,
       );
     }
   }
   return notices;
 }
 
-function requireClock(draft: State, clockId: string): FactionClock {
-  const id = assertNonEmptyString(clockId, "clockId");
-  const clock = draft.secrets.factionClocks.find((entry) => entry.id === id);
-  if (clock === undefined) {
-    const known = draft.secrets.factionClocks.map((entry) => entry.id).join(", ") || "（无）";
-    throw new Error(`faction clock 不存在: ${id}。已有时钟: ${known}。`);
+function requireUndercurrent(draft: State, undercurrentId: string): Undercurrent {
+  const id = assertNonEmptyString(undercurrentId, "undercurrentId");
+  const uc = draft.secrets.undercurrents.find((entry) => entry.id === id);
+  if (uc === undefined) {
+    const known = draft.secrets.undercurrents.map((entry) => entry.id).join(", ") || "（无）";
+    throw new Error(`undercurrent 不存在: ${id}。已有潜流: ${known}。`);
   }
-  return clock;
+  return uc;
 }
 
 function requireScheduledEvent(draft: State, eventId: string): ScheduledEvent {

@@ -35,7 +35,7 @@ export function buildBackstageGmBrief(state: State): string {
     lines.push(`待 harvest 的后台 director run ${pending.length} 个：`);
     for (const entry of pending) {
       lines.push(
-        `- run_id=${entry.runId}（line ${entry.lineId}，起于 ${entry.spawnedAt}）→ 用 run_id 调 harvest_backstage_candidate 取回审查，再 record_offscreen_event 落地。`,
+        `- run_id=${entry.runId}（line ${entry.lineId}，起于 ${entry.spawnedAt}）→ 用 run_id 调 harvest_backstage_candidate 取回审查，再 manage_undercurrent 落地。`,
       );
     }
   }

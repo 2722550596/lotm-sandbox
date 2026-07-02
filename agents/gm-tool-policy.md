@@ -35,7 +35,7 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 - money / material resources → `update_economy`
 - relationship movement with behavior evidence → `record_relationship_signal`
 - lasting hostility, missed windows, or durable residue → `record_memory`
-- offscreen hostile progress or world movement → `record_offscreen_event`
+  :- offscreen hostile progress or world movement → `manage_undercurrent`
 - NPC goal / order / fear / initiative shift → `update_actor_agenda`
 - NPC knowledge / suspicion / false belief shift → `record_actor_knowledge`
 - important NPC voice / stance refresh → `update_actor_impression`
@@ -70,7 +70,10 @@ Do not feed hidden GM facts into public-facing combat inputs.
 
 ## Offscreen orchestration
 
-后台世界推进系统（run_parallel_line / backstage director）暂关，转而使用 `novel-analyst` 获得原著剧情参考。调用后你会收到结构化的章节分析（情节脉络、伏笔、线索、世界观知识），据此继续叙事即可。
+暗流（undercurrent）管理：幕后势力的暗中活动通过 manage_undercurrent 工具记录。brew 创建暗流，advance 推进酝酿进度，manifest/disrupt/subside 收尾。
+
+- brew 时设置的 futureHook 会在 manifest 时自动创建悬念 hook。
+- 满槽时 manifest 会因 hook budget 不足报错——先把现有 hook payoff。
 
 ## 每轮推进节奏
 

@@ -67,7 +67,7 @@ export const clearBackstageLockToolDefinition: DomainToolDefinition = {
     "- 不传 runId 时清空全部 pending harvest + backstage obligations + pressure 计数器\n" +
     "- 传 runId 时只清理该 run 的 pending 标记（仍清全部 obligations）\n\n" +
     "禁区：\n" +
-    "- 正常流程不应使用——正确路径是 harvest_backstage_candidate → record_offscreen_event/resolve_backstage_line\n" +
+    "- 正常流程不应使用——正确路径是 harvest_backstage_candidate → manage_undercurrent/resolve_backstage_line\n" +
     "- 清理后原 run 的候选无法再从 engine 侧取回；如果仍有必要，手动读 session 文件\n" +
     "- 只清锁不恢复 state；需要回滚之前 commit_turn 的副作用时请用其他 debug 工具",
   parameters: Type.Object({

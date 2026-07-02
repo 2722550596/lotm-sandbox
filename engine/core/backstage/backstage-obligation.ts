@@ -117,7 +117,7 @@ function formatTriggerSummary(
 ): string {
   switch (trigger) {
     case "beat-complete":
-      return "Scene Beat 收口了——幕后的世界也该跟着推进一轮。用 run_parallel_line 跑个后台导演，或者自己推演后 record_offscreen_event。";
+      return "Scene Beat 收口了——幕后的世界也该跟着推进一轮。用 run_parallel_line 跑个后台导演，或者自己推演后 manage_undercurrent。";
     case "time-advance":
       return `本轮推进了 ${input.elapsedMinutes} 分钟（≥${BACKSTAGE_BIG_TIME_ADVANCE_MINUTES} 分钟触发阈值）——时间跨度够大，幕后的世界也该同步推进一轮。`;
     case "no-cost-streak":
@@ -132,7 +132,7 @@ function formatOpenBackstageObligations(obligations: readonly BackstageObligatio
     "存在未处理的后台世界线推进提醒，无法开始新的一轮。请先处理后台：",
     ...obligations.map((entry) => `- [${entry.trigger}] ${entry.summary}`),
     "处理方式：",
-    "用 record_offscreen_event 记录幕后发生的事件（有真实进展时），或用 resolve_backstage_line 确认本轮无变化（no-change/blocked）。",
-    "每条 record_offscreen_event 落地后会自动清掉一条待办。",
+    "用 manage_undercurrent 记录幕后发生的事件（有真实进展时），或用 resolve_backstage_line 确认本轮无变化（no-change/blocked）。",
+    "每条 manage_undercurrent 落地后会自动清掉一条待办。",
   ].join("\n");
 }

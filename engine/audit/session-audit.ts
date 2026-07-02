@@ -522,7 +522,7 @@ export function measureParallelLine(turns: readonly AuditTurn[]): ParallelLineRe
  * 结算了多少、按 outcome/reasonCode 分布、结束时还欠多少。
  *
  * 新的「软」信号是 `nonLandedRatio`：硬阻断逼着 GM 清账，但 GM 可能用
- * `resolve_backstage_line` 的 no-change 橡皮图章绕过，而非真的 record_offscreen_event 落地。
+ * `resolve_backstage_line` 的 no-change 橡皮图章绕过，而非真的 manage_undercurrent 落地。
  */
 export interface BackstageLedgerReport {
   /** reviewLog 中已结算的义务数（landed + no-change + blocked） */
