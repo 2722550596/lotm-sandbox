@@ -31,7 +31,7 @@ export function applyTurnTime(draft: State, time: TurnTimePolicy): SceneEventRes
 }
 
 function advanceTurnTime(draft: State, elapsedMinutesInput: number): SceneEventResult {
-  const elapsedMinutes = assertPositiveElapsedMinutes(elapsedMinutesInput);
+  const elapsedMinutes = assertNonNegativeInteger(elapsedMinutesInput, "elapsedMinutes");
   const nextTime = Temporal.Instant.from(draft.public.clock.currentAt)
     .add({ minutes: elapsedMinutes })
     .toString({ fractionalSecondDigits: 3 });
@@ -44,7 +44,7 @@ function travelTurnTime(
   draft: State,
   time: Extract<TurnTimePolicy, { kind: "travel" }>,
 ): SceneEventResult {
-  const elapsedMinutes = assertPositiveElapsedMinutes(time.elapsedMinutes);
+  const elapsedMinutes = assertNonNegativeInteger(time.elapsedMinutes, "elapsedMinutes");
   const nextTime = Temporal.Instant.from(draft.public.clock.currentAt)
     .add({ minutes: elapsedMinutes })
     .toString({ fractionalSecondDigits: 3 });
@@ -52,12 +52,4 @@ function travelTurnTime(
   draft.public.scene.lastResolvedAt = nextTime;
   draft.public.scene.location = time.location;
   return { message: `地点已更新，经过 ${elapsedMinutes} 分钟。` };
-}
-
-function assertPositiveElapsedMinutes(value: unknown): number {
-  const elapsedMinutes = assertNonNegativeInteger(value, "elapsedMinutes");
-  if (elapsedMinutes === 0) {
-    throw new Error("elapsedMinutes 必须大于 0。");
-  }
-  return elapsedMinutes;
 }

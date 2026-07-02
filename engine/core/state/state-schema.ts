@@ -326,13 +326,13 @@ const CAMPAIGN_MEMORY_SCHEMA = Type.Object({
 const TURN_TIME_POLICY_STATE_SCHEMA = Type.Union([
   Type.Object({
     kind: Type.Literal("elapsed"),
-    elapsedMinutes: Type.Integer({ minimum: 1 }),
+    elapsedMinutes: Type.Integer(),
     reason: NON_EMPTY_STRING_SCHEMA,
   }),
   Type.Object({
     kind: Type.Literal("travel"),
     location: LOCATION_STATE_SCHEMA,
-    elapsedMinutes: Type.Integer({ minimum: 1 }),
+    elapsedMinutes: Type.Integer(),
     reason: NON_EMPTY_STRING_SCHEMA,
   }),
 ]);

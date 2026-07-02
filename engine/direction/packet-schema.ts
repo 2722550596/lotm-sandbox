@@ -65,7 +65,7 @@ export const SCENE_TIME_SCHEMA = Type.Object({
   /** 格式化当前时间，如「第五纪1349年1月15日 星期二 14:30」 */
   display: Type.String({ minLength: 1 }),
   /** 本轮经过分钟数 */
-  elapsedMinutes: Type.Integer({ minimum: 1 }),
+  elapsedMinutes: Type.Integer(),
 });
 export type SceneTime = Static<typeof SCENE_TIME_SCHEMA>;
 
@@ -93,19 +93,19 @@ export const RENDER_DIRECTION_PACKET_SCHEMA = Type.Object({
   playerAction: Type.String({ minLength: 1 }),
   /** 已结算机械事实，每条必须在正文落地（binding） */
   resolvedChanges: Type.Array(Type.String({ minLength: 1 }), { minItems: 1 }),
-  npcStances: Type.Array(NPC_STANCE_SCHEMA),
+  npcStances: Type.Optional(Type.Array(NPC_STANCE_SCHEMA)),
   /**
    * binding：重要在场 NPC 本轮不主动行动时的静置声明。每个重要在场 NPC 要么在
    * npcStances（有主动 beat），要么在 npcOmissions（被明确静置）；渲染器据此保持物理连续性。
    */
   npcOmissions: Type.Optional(Type.Array(NPC_OMISSION_SCHEMA)),
   /** 建议落点意象（free） */
-  sensoryAnchors: Type.Array(Type.String({ minLength: 1 })),
+  sensoryAnchors: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
   /** 结尾必须落在自然接续点（binding） */
   endWindow: Type.String({ minLength: 1 }),
   eventWeight: stringEnumSchema(EVENT_WEIGHTS),
   /** 渲染所需 canon 预填；渲染器不得超出它编造原作设定 */
-  canonFacts: Type.Array(Type.String({ minLength: 1 })),
+  canonFacts: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
   /** UI 层候选行动，不进入正文；extension 可把 submitText 作为真正 user message 发出 */
   suggestedActions: Type.Optional(
     Type.Array(SUGGESTED_ACTION_SCHEMA, { minItems: 1, maxItems: 4 }),

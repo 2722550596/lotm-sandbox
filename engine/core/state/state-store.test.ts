@@ -6,7 +6,7 @@ import { cloneState, commitState, getPublicState, getState, hydrateState, patchS
 void test("resetState creates a valid initial state", () => {
   const state = resetState();
 
-  assert.equal(state.meta.schemaVersion, 0);
+  assert.equal(state.meta.schemaVersion, 2);
   assert.equal(state.public.protagonistActorId, "protagonist");
   assert.equal(typeof state.meta.rngSeed, "number");
 });

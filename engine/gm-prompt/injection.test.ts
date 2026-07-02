@@ -33,17 +33,16 @@ void test("injectGmPromptMessages inserts slot-based prompt stack", () => {
   const injected = injectGmPromptMessages<UserMessage>(messages);
   const texts = injected.map((message) => textOf(message));
 
-  assert.equal(injected.length, 7);
+  assert.equal(injected.length, 11);
   assert.match(texts[0] ?? "", /<settlement_principles>/);
   assert.match(texts[1] ?? "", /<world_context>/);
-  assert.equal(texts[2], "继续。");
-  assert.match(texts[3] ?? "", /<mechanical_state>/);
-  assert.match(texts[3] ?? "", /目标推进规则/);
-  assert.match(texts[3] ?? "", /当前没有 active Scene Beat/);
-  assert.doesNotMatch(texts[3] ?? "", /active beat 收口/);
-  assert.match(texts[4] ?? "", /<presence_impressions>/);
-  assert.match(texts[5] ?? "", /<turn_reminder>/);
-  assert.match(texts[6] ?? "", /<direction_contract>/);
+  assert.equal(texts[7], "继续。");
+  assert.match(texts[8] ?? "", /<mechanical_state>/);
+  assert.match(texts[8] ?? "", /目标推进规则/);
+  assert.match(texts[8] ?? "", /当前没有 active Scene Beat/);
+  assert.doesNotMatch(texts[8] ?? "", /active beat 收口/);
+  assert.match(texts[9] ?? "", /<presence_impressions>/);
+  assert.match(texts[10] ?? "", /<turn_reminder>/);
   // 结算投影零 style/render 模块
   for (const text of texts) {
     assert.doesNotMatch(
@@ -99,9 +98,9 @@ void test("injectGmPromptMessages keeps conversation history contiguous before r
   const injected = injectGmPromptMessages<UserMessage>(messages);
   const texts = injected.map((message) => textOf(message));
 
-  assert.equal(texts[2], "第一句。");
-  assert.equal(texts[3], "第二句。");
-  assert.match(texts[4] ?? "", /<mechanical_state>/);
+  assert.equal(texts[7], "第一句。");
+  assert.equal(texts[8], "第二句。");
+  assert.match(texts[9] ?? "", /<mechanical_state>/);
 });
 
 void test("injectGmPromptMessages injects prose continuity when last rendered prose is provided", () => {
@@ -113,14 +112,14 @@ void test("injectGmPromptMessages injects prose continuity when last rendered pr
   const texts = injected.map((message) => textOf(message));
 
   // prose_continuity 插在最后一条真实玩家输入之前：保留旧历史 prefix cache，又避免被误判为当前输入。
-  assert.equal(injected.length, 8);
-  assert.match(texts[2] ?? "", /<prose_continuity>/);
-  assert.match(texts[2] ?? "", /不是本轮玩家输入/);
-  assert.match(texts[2] ?? "", /不得回应、确认或据此设置 needsRender=false/);
-  assert.match(texts[2] ?? "", /物理连续性/);
-  assert.match(texts[2] ?? "", /你抱起少女走进通道/);
-  assert.equal(texts[3], "继续。");
-  assert.match(texts[4] ?? "", /<mechanical_state>/);
+  assert.equal(injected.length, 12);
+  assert.match(texts[7] ?? "", /<prose_continuity>/);
+  assert.match(texts[7] ?? "", /不是本轮玩家输入/);
+  assert.match(texts[7] ?? "", /不得回应、确认或据此设置 needsRender=false/);
+  assert.match(texts[7] ?? "", /物理连续性/);
+  assert.match(texts[7] ?? "", /你抱起少女走进通道/);
+  assert.equal(texts[8], "继续。");
+  assert.match(texts[9] ?? "", /<mechanical_state>/);
 });
 
 void test("injectGmPromptMessages places prose continuity before only the latest user message", () => {
@@ -130,10 +129,10 @@ void test("injectGmPromptMessages places prose continuity before only the latest
   const injected = injectGmPromptMessages<UserMessage>(messages, "上一轮正文。");
   const texts = injected.map((message) => textOf(message));
 
-  assert.equal(texts[2], "旧输入。");
-  assert.match(texts[3] ?? "", /<prose_continuity>/);
-  assert.equal(texts[4], "最新输入。");
-  assert.match(texts[5] ?? "", /<mechanical_state>/);
+  assert.equal(texts[7], "旧输入。");
+  assert.match(texts[8] ?? "", /<prose_continuity>/);
+  assert.equal(texts[9], "最新输入。");
+  assert.match(texts[10] ?? "", /<mechanical_state>/);
 });
 
 void test("injectGmPromptMessages skips prose continuity when no prose provided", () => {
@@ -143,8 +142,8 @@ void test("injectGmPromptMessages skips prose continuity when no prose provided"
   const withUndefined = injectGmPromptMessages<UserMessage>(messages, undefined);
   const withEmpty = injectGmPromptMessages<UserMessage>(messages, "");
 
-  assert.equal(withUndefined.length, 7);
-  assert.equal(withEmpty.length, 7);
+  assert.equal(withUndefined.length, 11);
+  assert.equal(withEmpty.length, 11);
 });
 
 function createUserMessage(text: string): UserMessage {

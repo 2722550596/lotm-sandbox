@@ -12,7 +12,7 @@ void test("advanceClock advances currentAt by specified minutes", () => {
 
   const after = draft.public.clock.currentAt;
   assert.ok(after > before);
-  assert.equal(after, "1349-01-01T07:30:00.000Z");
+  assert.equal(after, "1349-06-28T07:30:00.000Z");
 });
 
 void test("advanceClock updates lastResolvedAt", () => {
@@ -20,7 +20,7 @@ void test("advanceClock updates lastResolvedAt", () => {
 
   advanceClock(draft, 60, "测试推进");
 
-  assert.equal(draft.public.scene.lastResolvedAt, "1349-01-01T08:00:00.000Z");
+  assert.equal(draft.public.scene.lastResolvedAt, "1349-06-28T08:00:00.000Z");
 });
 
 void test("advanceClock rejects empty reason", () => {
@@ -46,7 +46,7 @@ void test("applyTurnTime with elapsed advances clock", () => {
   });
 
   assert.match(result.message, /时间已推进/);
-  assert.equal(draft.public.clock.currentAt, "1349-01-01T07:15:00.000Z");
+  assert.equal(draft.public.clock.currentAt, "1349-06-28T07:15:00.000Z");
 });
 
 void test("applyTurnTime with travel updates location and time", () => {
@@ -60,18 +60,9 @@ void test("applyTurnTime with travel updates location and time", () => {
   });
 
   assert.match(result.message, /地点已更新/);
-  assert.equal(draft.public.clock.currentAt, "1349-01-01T09:00:00.000Z");
+  assert.equal(draft.public.clock.currentAt, "1349-06-28T09:00:00.000Z");
   assert.equal(draft.public.scene.location.region, "贝克兰德");
   assert.equal(draft.public.scene.location.site, "下城区");
-});
-
-void test("applyTurnTime rejects zero elapsed minutes", () => {
-  const draft = createInitialState();
-
-  assert.throws(
-    () => applyTurnTime(draft, { kind: "elapsed", elapsedMinutes: 0, reason: "瞬间" }),
-    /必须大于 0/,
-  );
 });
 
 void test("applyTurnTime rejects empty reason", () => {

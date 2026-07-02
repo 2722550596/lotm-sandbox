@@ -67,7 +67,7 @@ export function validateRenderDirectionPacket(
 ): void {
   const errors: string[] = [];
   const stanceActorIds = new Set<ActorId>();
-  packet.npcStances.forEach((stance, index) => {
+  (packet.npcStances ?? []).forEach((stance, index) => {
     assertExistingPresentActor(stance.actorId, `npcStances[${index}].actorId`, ctx, errors);
     if (stanceActorIds.has(stance.actorId)) {
       errors.push(`npcStances 重复 actorId：${stance.actorId}。`);

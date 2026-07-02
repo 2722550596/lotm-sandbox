@@ -64,7 +64,7 @@ function formatAccepted(packet: DirectionPacket): string {
   const suggestedActionCount = packet.suggestedActions?.length ?? 0;
   return [
     "direction packet 已接收并通过 secret 防火墙，本轮结算结束。",
-    `binding 事实 ${packet.resolvedChanges.length} 条 / NPC 立场 ${packet.npcStances.length} 条 / UI 候选 ${suggestedActionCount} 条 / 篇幅 ${packet.eventWeight}。`,
+    `binding 事实 ${packet.resolvedChanges.length} 条 / NPC 立场 ${(packet.npcStances ?? []).length} 条 / UI 候选 ${suggestedActionCount} 条 / 篇幅 ${packet.eventWeight}。`,
     "渲染器将接手产出玩家可见正文。",
   ].join("\n");
 }

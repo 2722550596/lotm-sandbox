@@ -10,7 +10,6 @@ export function timePolicySchema(): ReturnType<typeof Type.Object> {
     elapsedMinutes: Type.Optional(
       Type.Object({
         minutes: Type.Integer({
-          minimum: 1,
           description:
             "叙事实际经过的分钟数。把正文里从上一轮到这一轮的所有事件、对话、移动、等待、休息、睡觉加起来算总时间，不要凭感觉填",
         }),

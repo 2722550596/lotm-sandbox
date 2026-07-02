@@ -32,16 +32,16 @@ function* packetStrings(packet: DirectionPacket): Generator<[path: string, text:
   for (const [i, text] of packet.resolvedChanges.entries()) {
     yield [`resolvedChanges[${i}]`, text];
   }
-  for (const [i, text] of packet.sensoryAnchors.entries()) {
+  for (const [i, text] of packet.sensoryAnchors?.entries() ?? []) {
     yield [`sensoryAnchors[${i}]`, text];
   }
-  for (const [i, text] of packet.canonFacts.entries()) {
+  for (const [i, text] of packet.canonFacts?.entries() ?? []) {
     yield [`canonFacts[${i}]`, text];
   }
   for (const [i, action] of packet.suggestedActions?.entries() ?? []) {
     yield [`suggestedActions[${i}].submitText`, action.submitText];
   }
-  for (const [i, stance] of packet.npcStances.entries()) {
+  for (const [i, stance] of packet.npcStances?.entries() ?? []) {
     yield [`npcStances[${i}].stance`, stance.stance];
     yield [`npcStances[${i}].wants`, stance.wants];
     yield [`npcStances[${i}].move`, stance.move];

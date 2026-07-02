@@ -14,6 +14,9 @@ node_modules/
 dist/
 docs/render-bench/
 
+# 没做完，暂时不传
+packages/
+
 # pi-actors spike runtime products (not release content)
 spikes/pi-actors/.sessions/
 spikes/pi-actors/.out/

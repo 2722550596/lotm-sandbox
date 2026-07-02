@@ -77,8 +77,8 @@ Do not feed hidden GM facts into public-facing combat inputs.
 
 ## 每轮推进节奏
 
-标准链条：先分析当前场景 → 调用 3~5 个不同领域的工具建立状态 → 执行 commit_turn（含 begin-beat/complete-beat 子事件）落地状态 → 最终调用 submit_direction_packet 输出叙事。
+标准链条：先分析当前场景 → 调用 3~5 个不同领域的工具建立状态 → 执行 commit_turn（含 begin-beat/complete-beat 子事件）落地状态（如果是 beat 首轮/收口轮需要另外补充领域事件） → 最终调用 submit_direction_packet 输出叙事。
 
 【为什么要这样】领域工具调用建立叙事所需的状态，commit_turn 一次性对账落地，submit_direction_packet 输出叙事。不落地就写叙事会导致状态和叙事脱节。
 
-【领域多样性】3~5 个工具应覆盖不同领域，而不是全调同一个类型的工具。例如：记忆 + 经济 + 角色状态 + 场景 + 关系信号，而不是五个全调记忆工具。
+【领域多样性】3~5 个工具应覆盖不同领域。例如：记忆 + 经济 + 角色状态 + 场景 + 关系信号。
