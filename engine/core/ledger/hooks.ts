@@ -17,7 +17,7 @@ export const MAX_ACTIVE_HOOKS = 2;
 
 const TERMINAL_STATUSES: readonly HookState["status"][] = ["paid", "retired"];
 
-export function openHook(draft: State, label: string): HookState {
+export function openHook(draft: State, label: string, relatedSecretId?: string): HookState {
   const labelValue = assertNonEmptyString(label, "label");
   assertActiveBudget(draft);
   const hook: HookState = {
@@ -27,6 +27,7 @@ export function openHook(draft: State, label: string): HookState {
     lastSurfacedAt: draft.public.clock.currentAt,
     surfaceCount: 1,
     lastNovelty: "",
+    relatedSecretId,
   };
   draft.public.hooks.push(hook);
   return hook;

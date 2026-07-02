@@ -17,6 +17,7 @@ import type { SecretCandidate } from "./semantic-reveal.ts";
 import { getActorSecretSlots, setActorSecretSlots } from "../actor/secret-actor-state.ts";
 import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
+import { retireHook } from "../ledger/hooks.ts";
 import { recordMemory } from "./memory.ts";
 import { judgeSecrets, judgeHiddenReaction, judgeCompatibility } from "./semantic-reveal.ts";
 export type {
@@ -270,6 +271,7 @@ export async function revealSecret(
   // 应用判断结果
   let revealed = false;
   let foreshadowed = false;
+  const revealedIds: string[] = [];
 
   for (const j of judgments) {
     const fact = factLookup.get(j.id);
@@ -277,6 +279,7 @@ export async function revealSecret(
       if (j.verdict === "revealed") {
         fact.revealState = "revealed";
         revealed = true;
+        revealedIds.push(fact.id);
       } else if (j.verdict === "hinted" && fact.revealState === "hidden") {
         fact.revealState = "foreshadowed";
         foreshadowed = true;
@@ -289,6 +292,7 @@ export async function revealSecret(
       if (j.verdict === "revealed") {
         slot.revealState = "revealed";
         revealed = true;
+        revealedIds.push(slot.id);
       } else if (j.verdict === "hinted" && slot.revealState === "hidden") {
         slot.revealState = "foreshadowed";
         foreshadowed = true;
@@ -331,6 +335,13 @@ export async function revealSecret(
         sourceEventId: null,
         claims: [{ kind: "mundane", statement: entry.value, certainty: "confirmed" }],
       });
+    }
+
+    // 收口关联 hook：找到 relatedSecretId 匹配已揭示秘密的 hook 并 retire
+    for (const hook of draft.public.hooks) {
+      if (hook.relatedSecretId !== undefined && revealedIds.includes(hook.relatedSecretId)) {
+        retireHook(draft, hook.id, `秘密已揭示（${event.actorId}）`);
+      }
     }
 
     recordSecretEvent(draft, `${event.actorId} 的秘密被揭示`, [event.actorId]);

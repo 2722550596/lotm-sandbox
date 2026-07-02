@@ -352,6 +352,7 @@ const HOOK_STATE_SCHEMA = Type.Object({
   lastSurfacedAt: ISO_INSTANT_SCHEMA,
   surfaceCount: NON_NEGATIVE_INTEGER_SCHEMA,
   lastNovelty: Type.String(),
+  relatedSecretId: Type.Optional(NON_EMPTY_STRING_SCHEMA),
 });
 
 const TURN_OBLIGATION_SCHEMA = Type.Object({

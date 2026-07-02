@@ -32,7 +32,7 @@ export function hintSecretTool(params: unknown, sessionManager: unknown): ToolRe
       }
       found.revealState = "foreshadowed";
 
-      const hook = openHook(draft, hintText);
+      const hook = openHook(draft, hintText, secretId);
       return { secretId, hookId: hook.id, hintText };
     },
     details: (result) => ({ ...result }),

@@ -114,6 +114,7 @@ export interface HookState {
   lastSurfacedAt: string;
   surfaceCount: number;
   lastNovelty: string;
+  relatedSecretId?: string;
 }
 
 export type TurnObligationKind =
