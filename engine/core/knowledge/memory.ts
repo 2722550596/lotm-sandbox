@@ -77,6 +77,7 @@ function recordMajorEvent(
     title: assertNonEmptyString(event.title, "title"),
     summary: assertNonEmptyString(event.summary, "summary"),
     consequences: normalizeConsequences(event.consequences),
+    claims: event.claims ? [...event.claims] : undefined,
   });
   return { eventId: id };
 }

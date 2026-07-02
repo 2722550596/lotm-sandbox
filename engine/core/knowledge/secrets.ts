@@ -15,9 +15,9 @@ import type {
 import type { SecretCandidate } from "./semantic-reveal.ts";
 
 import { getActorSecretSlots, setActorSecretSlots } from "../actor/secret-actor-state.ts";
+import { retireHook } from "../ledger/hooks.ts";
 import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
-import { retireHook } from "../ledger/hooks.ts";
 import { recordMemory } from "./memory.ts";
 import { judgeSecrets, judgeHiddenReaction, judgeCompatibility } from "./semantic-reveal.ts";
 export type {

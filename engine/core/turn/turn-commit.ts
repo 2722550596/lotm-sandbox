@@ -6,17 +6,13 @@ import type { MemoryEvent, MemoryEventResult } from "../knowledge/memory.ts";
 import type { SceneEvent, SceneEventResult } from "../scene/scene.ts";
 import type { OutfitState, State, TurnTimePolicy } from "../state/state.ts";
 
-import { changeActorOutfit } from "../actor/actor-impression.ts";
-import { applyTrackedItemEvent } from "../inventory/tracked-item.ts";
+import { findSecretSlot, collectAllSecretIds } from "../../tools/knowledge/hint-secret.ts";
 import { updateActorCondition } from "../actor/actor-condition.ts";
-import { recordMemory } from "../knowledge/memory.ts";
-import { updateEconomy } from "../economy/economy.ts";
-import { updateScene } from "../scene/scene.ts";
-import { assertNoOpenObligations } from "../ledger/obligations.ts";
+import { changeActorOutfit } from "../actor/actor-impression.ts";
 import { collectBackstageDueNotices } from "../backstage/faction-clock.ts";
-import { assertNonEmptyString } from "../utils/typebox-validation.ts";
-import { appendTurnLogEntry } from "./turn-log.ts";
-import { applyTurnTime } from "./turn-time.ts";
+import { updateEconomy } from "../economy/economy.ts";
+import { applyTrackedItemEvent } from "../inventory/tracked-item.ts";
+import { recordMemory } from "../knowledge/memory.ts";
 import {
   openHook,
   surfaceHook,
@@ -25,7 +21,11 @@ import {
   payHook,
   retireHook,
 } from "../ledger/hooks.ts";
-import { findSecretSlot, collectAllSecretIds } from "../../tools/knowledge/hint-secret.ts";
+import { assertNoOpenObligations } from "../ledger/obligations.ts";
+import { updateScene } from "../scene/scene.ts";
+import { assertNonEmptyString } from "../utils/typebox-validation.ts";
+import { appendTurnLogEntry } from "./turn-log.ts";
+import { applyTurnTime } from "./turn-time.ts";
 
 export interface OutfitTurnEvent {
   actorId: string;
@@ -48,7 +48,10 @@ export type TurnCommitEvent =
   | { kind: "economy"; event: EconomyEvent }
   | { kind: "memory"; event: MemoryEvent }
   | { kind: "outfit"; event: OutfitTurnEvent }
-  | { kind: "hint-secret"; event: { secretId: string; secretText?: string; hintText: string; reason: string } }
+  | {
+      kind: "hint-secret";
+      event: { secretId: string; secretText?: string; hintText: string; reason: string };
+    }
   | { kind: "hook"; event: HookCommitEvent };
 
 export interface TurnCommitInput {
@@ -182,10 +185,7 @@ function isTerminalHookStatus(status: string): boolean {
   return status === "paid" || status === "retired";
 }
 
-function applyHookEvent(
-  draft: State,
-  event: HookCommitEvent,
-): { message: string } {
+function applyHookEvent(draft: State, event: HookCommitEvent): { message: string } {
   switch (event.kind) {
     case "open":
       openHook(draft, event.label);
@@ -207,7 +207,6 @@ function applyHookEvent(
       return { message: `hook ${event.hookId} 已退场` };
   }
 }
-
 
 function collectWarnings(draft: State, input: TurnCommitInput): string[] {
   const warnings: string[] = [];

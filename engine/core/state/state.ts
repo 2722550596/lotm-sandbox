@@ -21,6 +21,7 @@ import type {
   TrackedItemVisibility,
 } from "./state-enum-schemas.ts";
 import type { CurrencyType } from "../economy/economy-schema.ts";
+import type { MemoryClaim } from "../knowledge/memory-schema.ts";
 
 export type {
   OffscreenEvent,
@@ -121,8 +122,6 @@ export type TurnObligationKind =
   | "scene-objective"
   | "scene-threat"
   | "actor-condition"
-  | "equipment"
-  | "sequence"
   | "memory"
   | "reveal-secret"
   | "tracked-item";
@@ -532,6 +531,7 @@ export interface MajorEventMemory {
   title: string;
   summary: string;
   consequences: string[];
+  claims?: MemoryClaim[];
 }
 
 export interface DailySummaryMemory {

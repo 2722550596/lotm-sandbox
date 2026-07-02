@@ -488,7 +488,9 @@ export function measureParallelLine(turns: readonly AuditTurn[]): ParallelLineRe
         Array.isArray(call.args["events"]) &&
         call.args["events"].some(
           (entry: unknown) =>
-            isRecord(entry) && entry["kind"] === "scene" && isRecord(entry["event"]) &&
+            isRecord(entry) &&
+            entry["kind"] === "scene" &&
+            isRecord(entry["event"]) &&
             entry["event"]["kind"] === "complete-beat",
         )
       ) {

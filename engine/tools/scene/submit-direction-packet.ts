@@ -99,11 +99,13 @@ export const submitDirectionPacketToolDefinition: DomainToolDefinition = {
               "binding：本轮该 NPC 为追求 wants 而主动说出/做出的一个具体行为（一句台词/一个要求/一个肢体动作）；哪怕过场轮也要有。必须是该 NPC 自己的主动 beat，不是对玩家/环境的被动反应；缺位会让该 NPC 被渲染成被动布景",
           }),
           refusesToSay: Type.String({
-            description: "该 NPC 本轮绝不说出口的话题。只描述回避什么（例：『对殖民地的经历闭口不谈』），玩家能在正文中感知到这种回避；严禁写入秘密本体",
+            description:
+              "该 NPC 本轮绝不说出口的话题。只描述回避什么（例：『对殖民地的经历闭口不谈』），玩家能在正文中感知到这种回避；严禁写入秘密本体",
           }),
         }),
-        { description:
-          "在场重要 NPC 每人一条主动 beat。这些条目完整传入渲染器→玩家可见正文：stance 决定行为基调，move 作为 NPC 本轮的具体行动逐字演给玩家看，refusesToSay 表明 NPC 回避的话题（玩家能感知到回避行为）。空数组表示本轮没有需要主动行动的 NPC；有在场重要 NPC 却不在 npcStances 也不在 npcOmissions，渲染器只能把他们写成被动布景（叙事轮必填）",
+        {
+          description:
+            "在场重要 NPC 每人一条主动 beat。这些条目完整传入渲染器→玩家可见正文：stance 决定行为基调，move 作为 NPC 本轮的具体行动逐字演给玩家看，refusesToSay 表明 NPC 回避的话题（玩家能感知到回避行为）。空数组表示本轮没有需要主动行动的 NPC；有在场重要 NPC 却不在 npcStances 也不在 npcOmissions，渲染器只能把他们写成被动布景（叙事轮必填）",
         },
       ),
     ),

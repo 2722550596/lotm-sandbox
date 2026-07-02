@@ -1,13 +1,12 @@
+import type { State } from "../../core/state/state.ts";
 import type { DomainToolDefinition } from "../runtime/tool-definition.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
 import { Type } from "typebox";
 
-import type { State } from "../../core/state/state.ts";
-
+import { openHook, surfaceHook } from "../../core/ledger/hooks.ts";
 import { assertNonEmptyString, isRecord } from "../../core/utils/typebox-validation.ts";
 import { runDomainEventTool } from "../system/domain-tool-runner.ts";
-import { openHook, surfaceHook } from "../../core/ledger/hooks.ts";
 
 export function hintSecretTool(params: unknown, sessionManager: unknown): ToolResult {
   return runDomainEventTool({
@@ -81,8 +80,7 @@ const HINT_SECRET_PARAMETER_SCHEMA = Type.Object({
   }),
   secretText: Type.Optional(
     Type.String({
-      description:
-        "可选。secretId 不存在时自动创建 HiddenWorldFact。secretId 已存在时忽略此字段",
+      description: "可选。secretId 不存在时自动创建 HiddenWorldFact。secretId 已存在时忽略此字段",
     }),
   ),
   reason: Type.String({ description: "为什么现在给出这个暗示" }),
@@ -99,8 +97,8 @@ export const hintSecretToolDefinition: DomainToolDefinition = {
     "如果 secretId 已存在，secretText 被忽略。\n\n" +
     "【什么时候用】\n" +
     '- 玩家角色感知到异常但无法确认时（"教堂地下室传来低语"）\n' +
-    '- NPC 给出了隐晦信息但未和盘托出时\n' +
-    '- 环境暗示某件隐藏真相的存在时\n\n' +
+    "- NPC 给出了隐晦信息但未和盘托出时\n" +
+    "- 环境暗示某件隐藏真相的存在时\n\n" +
     "【hook 生命周期】\n" +
     "hint_secret 创建的 hook 占 active budget（最多 2 个）。后续可通过 update_hook surface/park/escalate/pay/retire 管理。\n" +
     "当秘密通过 reveal_secret 正式揭示时，关联的 hook 应 retire 收口。\n\n" +
@@ -113,10 +111,7 @@ export const hintSecretToolDefinition: DomainToolDefinition = {
     hintSecretTool(params, ctx.sessionManager),
 };
 
-export function findSecretSlot(
-  draft: State,
-  secretId: string,
-): { revealState: string } | null {
+export function findSecretSlot(draft: State, secretId: string): { revealState: string } | null {
   for (const bundle of Object.values(draft.secrets.actorStates)) {
     const slots = bundle.secrets;
     if (!slots) continue;

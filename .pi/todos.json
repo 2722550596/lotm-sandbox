@@ -1,5 +1,5 @@
 {
-  "nextId": 105,
+  "nextId": 113,
   "items": [
     {
       "id": 1,
@@ -594,6 +594,54 @@
       "content": "Step 7: typecheck + test",
       "done": true,
       "created": 1782957777
+    },
+    {
+      "id": 105,
+      "content": "追踪所有 `equipment` 作为 TurnObligationKind 的引用并清理",
+      "done": true,
+      "created": 1782973320
+    },
+    {
+      "id": 106,
+      "content": "检查所有引用 record-major-event 的代码位置",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 107,
+      "content": "检查 state schema 和存储层结构",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 108,
+      "content": "检查 MemoryEvent 类型和工具 chain",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 109,
+      "content": "检查 prompt/description 中对 memory 的描述",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 110,
+      "content": "检查 obligation 系统对 memory 的依赖",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 111,
+      "content": "检查 turnHasCost 判定",
+      "done": true,
+      "created": 1782974686
+    },
+    {
+      "id": 112,
+      "content": "检查 test 覆盖",
+      "done": true,
+      "created": 1782974686
     }
   ]
 }

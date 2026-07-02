@@ -72,7 +72,8 @@ function filterEvents(memory: CampaignMemory, query: RecallMemoryQuery): MajorEv
 }
 
 function matchesEvent(event: MajorEventMemory, query: RecallMemoryQuery): boolean {
-  const haystack = `${event.title} ${event.summary} ${event.consequences.join(" ")}`;
+  const claimTexts = (event.claims ?? []).map((c) => c.statement).join(" ");
+  const haystack = `${event.title} ${event.summary} ${event.consequences.join(" ")} ${claimTexts}`;
   if (query.actorId !== undefined && !matchesText(haystack, query.actorId)) {
     return false;
   }

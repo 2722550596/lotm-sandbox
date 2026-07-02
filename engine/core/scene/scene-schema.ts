@@ -5,9 +5,7 @@ import type { TypeBoxValidator } from "../utils/typebox-validation.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
-import {
-  MEMORY_CLAIM_SCHEMA,
-} from "../knowledge/memory-schema.ts";
+import { MEMORY_CLAIM_SCHEMA } from "../knowledge/memory-schema.ts";
 import {
   SCENE_THREAT_SEVERITY_SCHEMA,
   SITUATION_KIND_SCHEMA,

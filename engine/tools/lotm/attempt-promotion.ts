@@ -179,8 +179,6 @@ function landingKindToObligationKind(
   kind: import("../../core/promotion/promotion-exchange-lotm.ts").LOTMPromotionStateLandingKind,
 ): import("../../core/state/state.ts").TurnObligationKind {
   switch (kind) {
-    case "actor-sequence":
-      return "sequence";
     case "actor-condition":
       return "actor-condition";
     case "inventory":
@@ -191,6 +189,9 @@ function landingKindToObligationKind(
       return "memory";
     case "reveal-secret":
       return "reveal-secret";
+    default:
+      // unreachable at runtime: "actor-sequence" filtered before this call
+      return "actor-condition";
   }
 }
 

@@ -13,7 +13,7 @@
 import type { DomainToolDefinition } from "../../tools/runtime/tool-definition.ts";
 import type { ToolResult } from "../../tools/runtime/tool-result.ts";
 import type { SequenceRank } from "../state/state-enum-schemas.ts";
-import type { State } from "../state/state.ts";
+import type { State, TurnObligationKind } from "../state/state.ts";
 import type { LOTMRankComparison } from "./lotm-rank.ts";
 
 import { Type } from "typebox";
@@ -275,8 +275,9 @@ function buildLOTMStateLandings(
   if (input.tactic === "use-ability" && combinedDelta >= 0.5) {
     landings.push({
       kind: "equipment",
-      required: true,
-      reason: "超凡能力释放后，装备/封印物的消耗、副作用或使用限制必须落点。",
+      required: false,
+      reason:
+        "如果使用了消耗品，必须用 update_tracked_item 更新消耗品状态；如果使用了封印物，必须体现副作用。如果副作用需要在战斗结束后体现则使用 update_hook 记录。",
     });
   }
 
@@ -586,7 +587,7 @@ function resolveLOTMCombatExchangeTool(params: unknown, sessionManager: unknown)
       const result = resolveLOTMCombatExchange(draft, input);
 
       const recorded = result.stateLandings
-        .filter((l) => l.required)
+        .filter((l): l is LOTMStateLanding & { kind: TurnObligationKind } => l.required)
         .map((l) =>
           recordObligation(draft, {
             source: "combat-exchange",

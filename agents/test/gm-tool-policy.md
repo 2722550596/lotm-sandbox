@@ -25,6 +25,7 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 :- All state changes — economy, actor conditions, memory, outfit, scene presence, beat lifecycle — go through the same `commit_turn` events array.
 :- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. Closing a beat's LAST objective requires `complete-beat` which handles the memory/presence/situation/next-beat wrap-up. `resolve-objective` cannot resolve the last objective.
 :- `time` is mandatory in `commit_turn`.
+
 - Resolve one player action window and its immediate consequences per reply.
 - If continuing would require another canonical turn, stop at the next actionable window for the player.
 

@@ -31,6 +31,7 @@ import {
   TRACKED_ITEM_VISIBILITY_SCHEMA,
 } from "./state-enum-schemas.ts";
 import { LOCATION_STATE_SCHEMA } from "../turn/turn-time-schema.ts";
+import { MEMORY_CLAIM_SCHEMA } from "../knowledge/memory-schema.ts";
 import { CURRENCY_TYPE_SCHEMA } from "../economy/economy-schema.ts";
 import { isRecord, parseTypeBoxValue, trimStringsDeep } from "../utils/typebox-validation.ts";
 
@@ -285,6 +286,7 @@ const MAJOR_EVENT_MEMORY_SCHEMA = Type.Object({
   title: NON_EMPTY_STRING_SCHEMA,
   summary: NON_EMPTY_STRING_SCHEMA,
   consequences: NON_EMPTY_STRING_ARRAY_SCHEMA,
+  claims: Type.Optional(Type.Array(MEMORY_CLAIM_SCHEMA)),
 });
 
 const DAILY_SUMMARY_MEMORY_SCHEMA = Type.Object({
@@ -336,8 +338,6 @@ export const TURN_OBLIGATION_KINDS = [
   "scene-objective",
   "scene-threat",
   "actor-condition",
-  "equipment",
-  "sequence",
   "memory",
   "reveal-secret",
   "tracked-item",

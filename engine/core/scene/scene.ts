@@ -183,7 +183,10 @@ export function updateScene(draft: State, event: SceneEvent): SceneEventResult {
   return result;
 }
 
-function beginBeat(draft: State, event: Extract<SceneEvent, { kind: "begin-beat" }>): SceneEventResult {
+function beginBeat(
+  draft: State,
+  event: Extract<SceneEvent, { kind: "begin-beat" }>,
+): SceneEventResult {
   const input: SceneBeatInput = {
     storyWindow: {
       currentArcId: draft.public.scene.storyWindow?.currentArcId ?? "main",
@@ -211,15 +214,18 @@ function completeBeat(
 ): SceneEventResult {
   const currentWindow = draft.public.scene.storyWindow;
   if (currentWindow === null) {
-    throw new Error(
-      "complete-beat 需要当前存在 Scene Beat。当前没有 active beat。",
-    );
+    throw new Error("complete-beat 需要当前存在 Scene Beat。当前没有 active beat。");
   }
   const completedBeatId = currentWindow.currentBeatId;
   const transition = transitionSceneBeat(draft, {
     completedBeatId,
     resolveAllObjectives: true,
-    nextBeat: event.nextBeat === undefined ? null : event.nextBeat === null ? null : buildNextBeatInput(event, completedBeatId),
+    nextBeat:
+      event.nextBeat === undefined
+        ? null
+        : event.nextBeat === null
+          ? null
+          : buildNextBeatInput(event, completedBeatId),
     reason: event.outcome,
   });
   if (event.memory !== undefined) {
@@ -239,7 +245,11 @@ function completeBeat(
     });
   }
   if (event.situation !== undefined) {
-    updateScene(draft, { kind: "set-situation", situation: event.situation, reason: event.outcome });
+    updateScene(draft, {
+      kind: "set-situation",
+      situation: event.situation,
+      reason: event.outcome,
+    });
   }
   const transitionMessage = transition.nextBeat?.message ?? "Scene Beat 已完成。";
   return { message: transitionMessage };
@@ -355,9 +365,7 @@ function resolveObjective(
   );
   const objective = draft.public.scene.objectives.find((entry) => entry.id === objectiveId);
   if (objective === undefined) {
-    throw new Error(
-      `resolve-objective 未找到匹配的目标: ${objectiveId}`,
-    );
+    throw new Error(`resolve-objective 未找到匹配的目标: ${objectiveId}`);
   }
   // 局部推进只允许解决非最终目标；若这是本 beat 最后一个未解决目标，
   // 收口必须走 complete-beat（带 memory/presence/situation/nextBeat 结尾）。
