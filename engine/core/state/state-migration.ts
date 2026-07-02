@@ -24,6 +24,8 @@ function migrateOneSchemaVersion(
   switch (version) {
     case 0:
       return migrateGameStateV0ToV1(raw);
+    case 1:
+      return migrateGameStateV1ToV2(raw);
     default:
       throw new Error(
         `不支持的 state schemaVersion: ${version}。当前支持逐步迁移到 ${CURRENT_STATE_SCHEMA_VERSION}。`,
@@ -58,6 +60,48 @@ function migrateGameStateV0ToV1(raw: Record<string, unknown>): Record<string, un
     meta: {
       ...meta,
       schemaVersion: 1,
+    },
+  };
+}
+
+// v1→v2: offscreenEventLog 移除，factionClocks → undercurrents（字段结构调整）
+function migrateGameStateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
+  const secrets = raw["secrets"];
+  if (!isRecord(secrets)) {
+    throw new Error(`state migration: secrets 格式异常: ${formatUnknown(secrets)}`);
+  }
+  const meta = raw["meta"];
+  if (!isRecord(meta)) {
+    throw new Error(`state migration: meta 格式异常: ${formatUnknown(meta)}`);
+  }
+
+  // 删除 offscreenEventLog
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { offscreenEventLog: _removed, factionClocks: oldClocks, ...restSecrets } = secrets;
+
+  // 转换 factionClocks → undercurrents
+  const oldClockArray = Array.isArray(oldClocks) ? oldClocks : [];
+  const undercurrents = oldClockArray.map((clock: Record<string, unknown>) => ({
+    id: clock["id"] ?? "",
+    actorIds: clock["factionId"] ? [String(clock["factionId"])] : [],
+    label: clock["label"] ?? "",
+    filled: typeof clock["filled"] === "number" ? clock["filled"] : 0,
+    size: typeof clock["size"] === "number" ? clock["size"] : 4,
+    visibility: clock["visibility"] === "leaked" ? "foreshadowed" : "secret",
+    pressureType: "",
+    futureHook: "",
+    lastChangedAt: "",
+  }));
+
+  return {
+    ...raw,
+    secrets: {
+      ...restSecrets,
+      undercurrents,
+    },
+    meta: {
+      ...meta,
+      schemaVersion: 2,
     },
   };
 }

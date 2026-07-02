@@ -602,4 +602,4 @@ export interface StateExport extends Omit<GameState, "public"> {
 
 export type State = GameState;
 
-export const CURRENT_STATE_SCHEMA_VERSION = 0;
+export const CURRENT_STATE_SCHEMA_VERSION = 2;
