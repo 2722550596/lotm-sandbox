@@ -13,7 +13,7 @@ import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
 
 /** 同时施压（active + escalated）的 hook 数量上限。 */
-export const MAX_ACTIVE_HOOKS = 2;
+export const MAX_ACTIVE_HOOKS = 5;
 
 const TERMINAL_STATUSES: readonly HookState["status"][] = ["paid", "retired"];
 

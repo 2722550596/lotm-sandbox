@@ -138,7 +138,6 @@ function applyHintSecretEvent(
   const found = findSecretSlot(draft, input.secretId);
   if (found === null) {
     if (input.secretText !== undefined && input.secretText.length > 0) {
-      // 秘密不存在但传了 secretText：自动创建 HiddenWorldFact 并 foreshadow
       draft.secrets.hiddenWorldFacts.push({
         id: input.secretId,
         text: input.secretText,
@@ -158,8 +157,29 @@ function applyHintSecretEvent(
     }
     found.revealState = "foreshadowed";
   }
+
+  // dedup：如果已存在关联同一秘密的 hook，复用并复现，不新建
+  const existing = draft.public.hooks.find(
+    (h) => h.relatedSecretId === input.secretId && !isTerminalHookStatus(h.status),
+  );
+  if (existing !== undefined) {
+    const novelty = input.hintText;
+    if (existing.status === "active") {
+      existing.lastNovelty = novelty;
+      existing.lastSurfacedAt = draft.public.clock.currentAt;
+      existing.surfaceCount++;
+    } else {
+      surfaceHook(draft, existing.id, novelty);
+    }
+    return { message: `秘密已暗示：${input.secretId} → hook ${existing.id}（复用）` };
+  }
+
   const hook = openHook(draft, input.hintText, input.secretId);
   return { message: `秘密已暗示：${input.secretId} → hook ${hook.id}` };
+}
+
+function isTerminalHookStatus(status: string): boolean {
+  return status === "paid" || status === "retired";
 }
 
 function applyHookEvent(

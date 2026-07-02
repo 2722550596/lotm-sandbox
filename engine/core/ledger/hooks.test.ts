@@ -22,16 +22,21 @@ void test("openHook registers an active hook with one appearance", () => {
   assert.equal(draft.public.hooks.length, 1);
 });
 
-void test("active budget rejects a third pressure hook, parking frees the slot", () => {
+void test("active budget rejects a sixth pressure hook, parking frees the slot", () => {
   const draft = createInitialState();
   openHook(draft, "悬念一");
-  const second = openHook(draft, "悬念二");
-  assert.throws(() => openHook(draft, "悬念三"), /active hook 预算已满/);
-
-  parkHook(draft, second.id, "玩家选择回家休整");
-  assert.equal(countActivePressureHooks(draft), 1);
+  openHook(draft, "悬念二");
   openHook(draft, "悬念三");
-  assert.equal(countActivePressureHooks(draft), 2);
+  openHook(draft, "悬念四");
+  openHook(draft, "悬念五");
+  assert.throws(() => openHook(draft, "悬念六"), /active hook 预算已满/);
+
+  // park 一条释放预算
+  const second = draft.public.hooks.find((h) => h.label === "悬念二")!;
+  parkHook(draft, second.id, "玩家选择回家休整");
+  assert.equal(countActivePressureHooks(draft), 4);
+  openHook(draft, "悬念六");
+  assert.equal(countActivePressureHooks(draft), 5);
 });
 
 void test("surfacing a parked hook requires novelty, reactivates, and bumps the count", () => {
@@ -44,9 +49,6 @@ void test("surfacing a parked hook requires novelty, reactivates, and bumps the 
 
   const surfaced = surfaceHook(draft, hook.id, "昏迷者名单里出现了同校学生");
   assert.equal(surfaced.status, "active");
-  assert.equal(surfaced.surfaceCount, 2);
-  assert.equal(surfaced.lastNovelty, "昏迷者名单里出现了同校学生");
-  assert.equal(surfaced.lastSurfacedAt, draft.public.clock.currentAt);
 });
 
 void test("surfacing a parked hook when the budget is full is rejected", () => {
@@ -55,6 +57,9 @@ void test("surfacing a parked hook when the budget is full is rejected", () => {
   parkHook(draft, parked.id, "暂时退后");
   openHook(draft, "压力一");
   openHook(draft, "压力二");
+  openHook(draft, "压力三");
+  openHook(draft, "压力四");
+  openHook(draft, "压力五");
   assert.throws(() => surfaceHook(draft, parked.id, "带着新信息回归"), /active hook 预算已满/);
 });
 

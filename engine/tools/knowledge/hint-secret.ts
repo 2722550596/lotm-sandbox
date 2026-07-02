@@ -5,9 +5,9 @@ import { Type } from "typebox";
 
 import type { State } from "../../core/state/state.ts";
 
-import { openHook } from "../../core/ledger/hooks.ts";
 import { assertNonEmptyString, isRecord } from "../../core/utils/typebox-validation.ts";
 import { runDomainEventTool } from "../system/domain-tool-runner.ts";
+import { openHook, surfaceHook } from "../../core/ledger/hooks.ts";
 
 export function hintSecretTool(params: unknown, sessionManager: unknown): ToolResult {
   return runDomainEventTool({
@@ -19,6 +19,7 @@ export function hintSecretTool(params: unknown, sessionManager: unknown): ToolRe
       const reason = assertNonEmptyString(raw["reason"], "reason");
       const secretText = typeof raw["secretText"] === "string" ? raw["secretText"] : undefined;
 
+      let hookId: string;
       const found = findSecretSlot(draft, secretId);
       if (found === null) {
         if (secretText !== undefined && secretText.length > 0) {
@@ -44,12 +45,29 @@ export function hintSecretTool(params: unknown, sessionManager: unknown): ToolRe
         found.revealState = "foreshadowed";
       }
 
-      const hook = openHook(draft, hintText, secretId);
-      return { secretId, hookId: hook.id, hintText };
+      // dedup：如果已存在关联同一秘密的 hook，复用并复现
+      const existing = draft.public.hooks.find(
+        (h) => h.relatedSecretId === secretId && h.status !== "paid" && h.status !== "retired",
+      );
+      if (existing !== undefined) {
+        if (existing.status === "active") {
+          existing.lastNovelty = hintText;
+          existing.lastSurfacedAt = draft.public.clock.currentAt;
+          existing.surfaceCount++;
+        } else {
+          surfaceHook(draft, existing.id, hintText);
+        }
+        hookId = existing.id;
+      } else {
+        const hook = openHook(draft, hintText, secretId);
+        hookId = hook.id;
+      }
+
+      return { secretId, hookId, hintText };
     },
     details: (result) => ({ ...result }),
     message: (result) =>
-      `秘密已暗示：${result.secretId}。已创建暗示钩子 ${result.hookId}：「${result.hintText}」。`,
+      `秘密已暗示：${result.secretId}。${result.hookId ? `hook ${result.hookId}` : ""}「${result.hintText}」。`,
   });
 }
 
