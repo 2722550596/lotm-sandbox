@@ -26,6 +26,7 @@ import { updateTrackedItemToolDefinition } from "./inventory/update-tracked-item
 import { configureSecretToolDefinition } from "./knowledge/configure-secret.ts";
 import { recallMemoryToolDefinition } from "./knowledge/recall-memory.ts";
 import { recordMemoryToolDefinition } from "./knowledge/record-memory.ts";
+import { hintSecretToolDefinition } from "./knowledge/hint-secret.ts";
 import { revealSecretToolDefinition } from "./knowledge/reveal-secret.ts";
 import { summarizeSecretsToolDefinition } from "./knowledge/summarize-secrets.ts";
 import { lookupAbilityToolDefinition } from "./lookup/ability-lookup-tool.ts";
@@ -63,6 +64,7 @@ const TOOL_DEFINITIONS: readonly DomainToolDefinition[] = [
   configureSecretToolDefinition,
   setScenePresenceToolDefinition,
   upsertActorToolDefinition,
+  hintSecretToolDefinition,
   recordActingFeedbackToolDefinition,
   updateEconomyToolDefinition,
   revealSecretToolDefinition,
