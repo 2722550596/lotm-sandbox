@@ -41,7 +41,7 @@ function readRawSchemaVersion(raw: Record<string, unknown>): number {
   return assertInteger(meta["schemaVersion"], "meta.schemaVersion");
 }
 
-// v0→v1: 添加 pendingDirectionPacket 字段（引擎内部结算标记）
+// v0→v1: 添加 pendingDirectionPacket 字段 + 补齐 public.memory.dailyEvents
 function migrateGameStateV0ToV1(raw: Record<string, unknown>): Record<string, unknown> {
   const pub = raw["public"];
   if (!isRecord(pub)) {
@@ -51,11 +51,16 @@ function migrateGameStateV0ToV1(raw: Record<string, unknown>): Record<string, un
   if (!isRecord(meta)) {
     throw new Error(`state migration: meta 格式异常: ${formatUnknown(meta)}`);
   }
+  const memory = pub["memory"];
+  const safeMemory = isRecord(memory)
+    ? { ...memory, dailyEvents: memory["dailyEvents"] ?? [] }
+    : { eventLog: [], dailySummaries: [], dailyEvents: [], knowledge: [], facts: [], memoryLog: [] };
   return {
     ...raw,
     public: {
       ...pub,
       pendingDirectionPacket: pub["pendingDirectionPacket"] ?? false,
+      memory: safeMemory,
     },
     meta: {
       ...meta,
@@ -64,7 +69,7 @@ function migrateGameStateV0ToV1(raw: Record<string, unknown>): Record<string, un
   };
 }
 
-// v1→v2: offscreenEventLog 移除，factionClocks → undercurrents（字段结构调整）
+// v1→v2: offscreenEventLog 移除，factionClocks → undercurrents；并补齐 public.memory.dailyEvents
 function migrateGameStateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
   const secrets = raw["secrets"];
   if (!isRecord(secrets)) {
@@ -73,6 +78,10 @@ function migrateGameStateV1ToV2(raw: Record<string, unknown>): Record<string, un
   const meta = raw["meta"];
   if (!isRecord(meta)) {
     throw new Error(`state migration: meta 格式异常: ${formatUnknown(meta)}`);
+  }
+  const pub = raw["public"];
+  if (!isRecord(pub)) {
+    throw new Error(`state migration: public 格式异常: ${formatUnknown(pub)}`);
   }
 
   // 删除 offscreenEventLog
@@ -93,11 +102,21 @@ function migrateGameStateV1ToV2(raw: Record<string, unknown>): Record<string, un
     lastChangedAt: "",
   }));
 
+  // 补齐 public.memory 中可能缺失的 dailyEvents（v1 状态可能没有）
+  const memory = pub["memory"];
+  const safeMemory = isRecord(memory)
+    ? { ...memory, dailyEvents: memory["dailyEvents"] ?? [] }
+    : { eventLog: [], dailySummaries: [], dailyEvents: [], knowledge: [], facts: [], memoryLog: [] };
+
   return {
     ...raw,
     secrets: {
       ...restSecrets,
       undercurrents,
+    },
+    public: {
+      ...pub,
+      memory: safeMemory,
     },
     meta: {
       ...meta,
