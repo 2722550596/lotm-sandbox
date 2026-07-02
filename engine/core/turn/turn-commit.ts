@@ -48,7 +48,7 @@ export type TurnCommitEvent =
   | { kind: "economy"; event: EconomyEvent }
   | { kind: "memory"; event: MemoryEvent }
   | { kind: "outfit"; event: OutfitTurnEvent }
-  | { kind: "hint-secret"; event: { secretId: string; hintText: string; reason: string } }
+  | { kind: "hint-secret"; event: { secretId: string; secretText?: string; hintText: string; reason: string } }
   | { kind: "hook"; event: HookCommitEvent };
 
 export interface TurnCommitInput {
@@ -133,19 +133,31 @@ function applyTurnEvent(
 
 function applyHintSecretEvent(
   draft: State,
-  input: { secretId: string; hintText: string; reason: string },
+  input: { secretId: string; secretText?: string; hintText: string; reason: string },
 ): { message: string } {
   const found = findSecretSlot(draft, input.secretId);
   if (found === null) {
-    const available = collectAllSecretIds(draft);
-    throw new Error(
-      `hint-secret: 未找到 secret ${input.secretId}。可用 secrets: ${available.length > 0 ? available.join(", ") : "无"}`,
-    );
+    if (input.secretText !== undefined && input.secretText.length > 0) {
+      // 秘密不存在但传了 secretText：自动创建 HiddenWorldFact 并 foreshadow
+      draft.secrets.hiddenWorldFacts.push({
+        id: input.secretId,
+        text: input.secretText,
+        revealState: "foreshadowed",
+        revealCondition: `已暗示（${input.reason}）`,
+        relatedActorIds: [draft.public.protagonistActorId],
+      });
+    } else {
+      const available = collectAllSecretIds(draft);
+      throw new Error(
+        `hint-secret: 未找到 secret ${input.secretId}。可用 secrets: ${available.length > 0 ? available.join(", ") : "无"}。如需自动创建，请传 secretText。`,
+      );
+    }
+  } else {
+    if (found.revealState === "revealed") {
+      throw new Error(`hint-secret: secret ${input.secretId} 已完全揭示。`);
+    }
+    found.revealState = "foreshadowed";
   }
-  if (found.revealState === "revealed") {
-    throw new Error(`hint-secret: secret ${input.secretId} 已完全揭示。`);
-  }
-  found.revealState = "foreshadowed";
   const hook = openHook(draft, input.hintText, input.secretId);
   return { message: `秘密已暗示：${input.secretId} → hook ${hook.id}` };
 }
