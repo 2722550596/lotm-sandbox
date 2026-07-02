@@ -6,6 +6,9 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import {
+  MEMORY_CLAIM_SCHEMA,
+} from "../knowledge/memory-schema.ts";
+import {
   SCENE_THREAT_SEVERITY_SCHEMA,
   SITUATION_KIND_SCHEMA,
   stringEnumSchema,
@@ -25,11 +28,70 @@ export const SCENE_EVENT_KINDS = [
   "add-threat",
   "clear-threat",
   "scene-presence",
+  "begin-beat",
+  "complete-beat",
 ] as const;
 const SCENE_EVENT_KIND_SCHEMA = stringEnumSchema(SCENE_EVENT_KINDS);
 
-// storyWindow lifecycle 只能由 progress_scene_beat begin/complete 驱动；
-// 此 schema 仅用于持久化 state（state-schema 复用），不再有对应的 scene event。
+// ── beat lifecycle sub-kinds ────────────────────────────────────────────────
+
+const SCENE_BEAT_ACTION_POLICY_SCHEMA = Type.Object({
+  allowedActions: Type.Optional(Type.Array(Type.String())),
+  forbiddenEscalations: Type.Optional(Type.Array(Type.String())),
+  completionCriteria: Type.Optional(Type.Array(Type.String())),
+  nextBeatHints: Type.Optional(Type.Array(Type.String())),
+});
+
+const SCENE_BEAT_PRESENCE_SCHEMA = Type.Object({
+  presentActorIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+  allyActorIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+});
+
+const SCENE_BEAT_THREAT_SCHEMA = Type.Object({
+  summary: Type.String({ minLength: 1 }),
+  severity: SCENE_THREAT_SEVERITY_SCHEMA,
+});
+
+const SCENE_BEAT_MEMORY_SCHEMA = Type.Object({
+  title: Type.String({ minLength: 1 }),
+  summary: Type.String({ minLength: 1 }),
+  consequences: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+  claims: Type.Optional(Type.Array(MEMORY_CLAIM_SCHEMA)),
+});
+
+const SCENE_BEAT_NEXT_BEAT_SCHEMA = Type.Object({
+  title: Type.String({ minLength: 1 }),
+  objectives: Type.Array(Type.String({ minLength: 1 })),
+  beatId: Type.Optional(Type.String({ minLength: 1 })),
+  actionPolicy: Type.Optional(SCENE_BEAT_ACTION_POLICY_SCHEMA),
+  threats: Type.Optional(Type.Array(SCENE_BEAT_THREAT_SCHEMA)),
+  presence: Type.Optional(SCENE_BEAT_PRESENCE_SCHEMA),
+  situation: Type.Optional(SITUATION_KIND_SCHEMA),
+});
+
+export const BEGIN_BEAT_EVENT_SCHEMA = Type.Object({
+  kind: Type.Literal("begin-beat"),
+  title: Type.String({ minLength: 1 }),
+  objectives: Type.Array(Type.String({ minLength: 1 })),
+  purpose: Type.String({ minLength: 1 }),
+  beatId: Type.Optional(Type.String({ minLength: 1 })),
+  actionPolicy: Type.Optional(SCENE_BEAT_ACTION_POLICY_SCHEMA),
+  threats: Type.Optional(Type.Array(SCENE_BEAT_THREAT_SCHEMA)),
+  presence: Type.Optional(SCENE_BEAT_PRESENCE_SCHEMA),
+  situation: Type.Optional(SITUATION_KIND_SCHEMA),
+});
+
+export const COMPLETE_BEAT_EVENT_SCHEMA = Type.Object({
+  kind: Type.Literal("complete-beat"),
+  outcome: Type.String({ minLength: 1 }),
+  memory: Type.Optional(SCENE_BEAT_MEMORY_SCHEMA),
+  nextBeat: Type.Optional(Type.Union([SCENE_BEAT_NEXT_BEAT_SCHEMA, Type.Null()])),
+  presence: Type.Optional(SCENE_BEAT_PRESENCE_SCHEMA),
+  situation: Type.Optional(SITUATION_KIND_SCHEMA),
+});
+
+// ── legacy sub-kinds ───────────────────────────────────────────────────────
+
 export const STORY_WINDOW_STATE_SCHEMA = Type.Object({
   currentArcId: Type.String({ minLength: 1 }),
   currentBeatId: Type.String({ minLength: 1 }),
@@ -74,9 +136,6 @@ export const ADD_THREAT_EVENT_SCHEMA = Type.Object({
 
 export const CLEAR_THREAT_EVENT_SCHEMA = Type.Object({
   kind: Type.Literal("clear-threat"),
-  // 二选一：threatSummary 逐字复制 GM Brief「当前威胁」里的 summary（推荐，
-  // 与 resolve-objective 的 objectiveSummary 兜底对称），或 threatId 直引投影出的 id。
-  // 两者都缺时 clearThreat 抛带可用清单的错误，引导模型补齐。
   threatId: Type.Optional(Type.String({ minLength: 1 })),
   threatSummary: Type.Optional(Type.String({ minLength: 1 })),
   reason: Type.String({ minLength: 1 }),
@@ -96,7 +155,9 @@ export type SceneEvent =
   | Static<typeof RESOLVE_OBJECTIVE_EVENT_SCHEMA>
   | Static<typeof ADD_THREAT_EVENT_SCHEMA>
   | Static<typeof CLEAR_THREAT_EVENT_SCHEMA>
-  | Static<typeof SCENE_PRESENCE_EVENT_SCHEMA>;
+  | Static<typeof SCENE_PRESENCE_EVENT_SCHEMA>
+  | Static<typeof BEGIN_BEAT_EVENT_SCHEMA>
+  | Static<typeof COMPLETE_BEAT_EVENT_SCHEMA>;
 
 const SCENE_EVENT_KIND_VALIDATOR = Compile(SCENE_EVENT_KIND_SCHEMA);
 const SET_LOCATION_EVENT_VALIDATOR = Compile(SET_LOCATION_EVENT_SCHEMA);
@@ -106,9 +167,9 @@ const RESOLVE_OBJECTIVE_EVENT_VALIDATOR = Compile(RESOLVE_OBJECTIVE_EVENT_SCHEMA
 const ADD_THREAT_EVENT_VALIDATOR = Compile(ADD_THREAT_EVENT_SCHEMA);
 const CLEAR_THREAT_EVENT_VALIDATOR = Compile(CLEAR_THREAT_EVENT_SCHEMA);
 const SCENE_PRESENCE_EVENT_VALIDATOR = Compile(SCENE_PRESENCE_EVENT_SCHEMA);
+const BEGIN_BEAT_EVENT_VALIDATOR = Compile(BEGIN_BEAT_EVENT_SCHEMA);
+const COMPLETE_BEAT_EVENT_VALIDATOR = Compile(COMPLETE_BEAT_EVENT_SCHEMA);
 
-// 注意：Compile 必须在独立常量上调用，不能内联在带 satisfies 的对象字面量里——
-// 上下文类型会干扰泛型推导，把 Validator 退化成 unknown。
 const SCENE_EVENT_VARIANT_VALIDATORS = {
   "set-location": SET_LOCATION_EVENT_VALIDATOR,
   "set-situation": SET_SITUATION_EVENT_VALIDATOR,
@@ -117,6 +178,8 @@ const SCENE_EVENT_VARIANT_VALIDATORS = {
   "add-threat": ADD_THREAT_EVENT_VALIDATOR,
   "clear-threat": CLEAR_THREAT_EVENT_VALIDATOR,
   "scene-presence": SCENE_PRESENCE_EVENT_VALIDATOR,
+  "begin-beat": BEGIN_BEAT_EVENT_VALIDATOR,
+  "complete-beat": COMPLETE_BEAT_EVENT_VALIDATOR,
 } satisfies Record<SceneEvent["kind"], TypeBoxValidator<SceneEvent>>;
 
 export function parseSceneEvent(value: unknown, fieldName: string): SceneEvent {

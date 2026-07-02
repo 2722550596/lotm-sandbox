@@ -23,7 +23,6 @@ export function getStateSchemaTool(): ToolResult {
     regularTools: [
       "get_status",
       "commit_turn",
-      "progress_scene_beat",
       "record_memory",
       "upsert_actor",
       "update_actor_condition",

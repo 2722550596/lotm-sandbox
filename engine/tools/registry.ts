@@ -38,7 +38,6 @@ import { recordRelationshipSignalToolDefinition } from "./relationship/record-re
 import { renderDomainToolResult } from "./runtime/tool-render.ts";
 import { commitTurnToolDefinition } from "./scene/commit-turn.ts";
 import { privateResolveToolDefinition } from "./scene/private-resolve.ts";
-import { progressSceneBeatToolDefinition } from "./scene/progress-scene-beat.ts";
 import { submitDirectionPacketToolDefinition } from "./scene/submit-direction-packet.ts";
 import { getStatusRawToolDefinition, getStatusToolDefinition } from "./system/get-status.ts";
 import { initializeNewGameToolDefinition } from "./system/initialize-new-game.ts";
@@ -48,7 +47,6 @@ import { updateHookToolDefinition } from "./system/update-hook.ts";
 const TOOL_DEFINITIONS: readonly DomainToolDefinition[] = [
   initializeNewGameToolDefinition,
   commitTurnToolDefinition,
-  progressSceneBeatToolDefinition,
   getStatusToolDefinition,
   getStatusRawToolDefinition,
   recordMemoryToolDefinition,

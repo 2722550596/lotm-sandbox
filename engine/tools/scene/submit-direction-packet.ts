@@ -35,7 +35,7 @@ export function submitDirectionPacketTool(
   const state = getState();
   if (packet.needsRender && !state.public.pendingDirectionPacket) {
     throw new Error(
-      "叙事轮（needsRender=true）必须先调用 commit_turn 或 progress_scene_beat 结算本轮状态变化，再调用 submit_direction_packet 输出叙事。没有状态结算的正文输出会导致状态与叙事脱节。meta/OOC 直答轮用 needsRender=false。",
+      "叙事轮（needsRender=true）必须先调用 commit_turn 结算本轮状态变化，再调用 submit_direction_packet 输出叙事。没有状态结算的正文输出会导致状态与叙事脱节。meta/OOC 直答轮用 needsRender=false。",
     );
   }
   if (packet.needsRender) {

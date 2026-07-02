@@ -48,7 +48,7 @@ export type SceneBeatProgressResult =
       situation: SceneEventResult | null;
     };
 
-const DEFAULT_ALLOWED_ACTIONS = ["观察当前局势", "回应在场角色", "决定下一步行动"];
+export const DEFAULT_ALLOWED_ACTIONS = ["观察当前局势", "回应在场角色", "决定下一步行动"];
 
 export function progressSceneBeat(
   draft: State,

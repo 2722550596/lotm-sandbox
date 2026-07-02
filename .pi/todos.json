@@ -1,5 +1,5 @@
 {
-  "nextId": 98,
+  "nextId": 105,
   "items": [
     {
       "id": 1,
@@ -552,6 +552,48 @@
       "done": false,
       "created": 1782806939,
       "tag": "done"
+    },
+    {
+      "id": 98,
+      "content": "Step 1: schema — add begin-beat/complete-beat to scene-schema.ts",
+      "done": true,
+      "created": 1782957777
+    },
+    {
+      "id": 99,
+      "content": "Step 2: core — add handlers in scene.ts applySceneEvent",
+      "done": true,
+      "created": 1782957777
+    },
+    {
+      "id": 100,
+      "content": "Step 3: tool — update commitTurnTool (beatBoundary, desc)",
+      "done": true,
+      "created": 1782957777
+    },
+    {
+      "id": 101,
+      "content": "Step 4: delete standalone tool and test, update registry",
+      "done": false,
+      "created": 1782957777
+    },
+    {
+      "id": 102,
+      "content": "Step 5: audit — update session-audit.ts",
+      "done": false,
+      "created": 1782957777
+    },
+    {
+      "id": 103,
+      "content": "Step 6: update guards and prompt files",
+      "done": false,
+      "created": 1782957777
+    },
+    {
+      "id": 104,
+      "content": "Step 7: typecheck + test",
+      "done": false,
+      "created": 1782957777
     }
   ]
 }

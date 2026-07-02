@@ -225,7 +225,7 @@ export function groupTurns(path: readonly RawEntry[]): AuditTurn[] {
 
 // ---------- 指标 ----------
 
-const CANONICAL_COMMIT_TOOLS = new Set(["commit_turn", "progress_scene_beat"]);
+const CANONICAL_COMMIT_TOOLS = new Set(["commit_turn"]);
 
 /** 不改变 state 的只读工具；get_status 冗余判定用 */
 const READ_ONLY_TOOLS = new Set([
@@ -478,6 +478,19 @@ export function measureParallelLine(turns: readonly AuditTurn[]): ParallelLineRe
         call.name === "progress_scene_beat" &&
         isRecord(call.args) &&
         call.args["kind"] === "complete"
+      ) {
+        beatComplete = true;
+      }
+      // 新格式：commit_turn 里 scene.complete-beat
+      if (
+        call.name === "commit_turn" &&
+        isRecord(call.args) &&
+        Array.isArray(call.args["events"]) &&
+        call.args["events"].some(
+          (entry: unknown) =>
+            isRecord(entry) && entry["kind"] === "scene" && isRecord(entry["event"]) &&
+            entry["event"]["kind"] === "complete-beat",
+        )
       ) {
         beatComplete = true;
       }

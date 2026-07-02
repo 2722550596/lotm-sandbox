@@ -40,7 +40,7 @@ export function buildGmBrief(
     ...formatScheduledEvents(publicState, secrets),
     ...formatSecretsGlance(publicState, secrets),
     ...formatTurnLog(publicState),
-    "本轮工具纪律：每轮 time 必须用 elapsed/travel 推进时间；Scene Beat lifecycle 用 progress_scene_beat；非 Scene Beat lifecycle 的多状态变化用 commit_turn；actor 入场/离场用 set_scene_presence。不要输出 JSON、数值表、schema 字段。",
+    "本轮工具纪律：每轮 time 必须用 elapsed/travel 推进时间；Scene Beat lifecycle 用 begin-beat/complete-beat scene 子事件；actor 入场/离场用 set_scene_presence。不要输出 JSON、数值表、schema 字段。",
   ].join("\n");
 }
 
@@ -123,12 +123,12 @@ function formatObjectiveRouting(publicState: PublicGameState): string {
     (objective) => objective.status !== "resolved",
   );
   if (publicState.scene.storyWindow === null) {
-    return "当前没有 active Scene Beat；objectives 是 beat-scoped 状态，不能用 commit_turn 增删。复杂新场景先用 progress_scene_beat kind=begin；普通状态变化用 commit_turn。";
+    return "当前没有 active Scene Beat；objectives 是 beat-scoped 状态，不能用 commit_turn 增删。复杂新场景先用 begin-beat scene 事件；普通状态变化用 commit_turn。";
   }
   if (activeObjectives.length === 0) {
-    return "当前 beat 的目标已全部解决；用 progress_scene_beat kind=complete 收口。";
+    return "当前 beat 的目标已全部解决；用 complete-beat scene 事件收口。";
   }
-  return "active beat 收口用 progress_scene_beat complete；仅在局部解决非最终目标时，commit_turn 的 scene event 用 resolve-objective 并用 objectiveSummary 逐字复制上方 summary（不能解决最后一个目标）。";
+  return "active beat 收口用 complete-beat scene 事件；仅在局部解决非最终目标时，commit_turn 的 scene event 用 resolve-objective 并用 objectiveSummary 逐字复制上方 summary（不能解决最后一个目标）。";
 }
 
 function formatSceneThreats(
@@ -152,7 +152,7 @@ function formatThreatRouting(publicState: PublicGameState): string {
 function formatStoryWindow(publicState: PublicGameState): string {
   const window = publicState.scene.storyWindow;
   if (window === null) {
-    return "未设定；复杂场景应先用 progress_scene_beat kind=begin 锁定 beat 边界";
+    return "未设定；复杂场景应先用 begin-beat scene 事件锁定 beat 边界";
   }
   const allowed = window.allowedActions.length === 0 ? "未列出" : window.allowedActions.join("、");
   const forbidden =

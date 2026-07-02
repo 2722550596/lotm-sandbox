@@ -11,6 +11,8 @@ import type { SceneBeatThreatInput } from "./scene-beat-schema.ts";
 import type { SceneEvent } from "./scene-schema.ts";
 
 import { setScenePresence } from "../actor/actor.ts";
+import { recordMemory } from "../knowledge/memory.ts";
+import { DEFAULT_ALLOWED_ACTIONS } from "./scene-beat-lifecycle.ts";
 import { settleOldestObligation } from "../ledger/obligations.ts";
 import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
@@ -168,7 +170,9 @@ export function transitionSceneBeat(
 }
 
 export function updateScene(draft: State, event: SceneEvent): SceneEventResult {
-  assertNonEmptyString(event.reason, "reason");
+  if (event.kind !== "begin-beat" && event.kind !== "complete-beat") {
+    assertNonEmptyString(event.reason, "reason");
+  }
   const result = applySceneEvent(draft, event);
   if (event.kind === "add-objective" || event.kind === "resolve-objective") {
     settleOldestObligation(draft, ["scene-objective"]);
@@ -178,6 +182,92 @@ export function updateScene(draft: State, event: SceneEvent): SceneEventResult {
   return result;
 }
 
+function beginBeat(draft: State, event: Extract<SceneEvent, { kind: "begin-beat" }>): SceneEventResult {
+  const input: SceneBeatInput = {
+    storyWindow: {
+      currentArcId: draft.public.scene.storyWindow?.currentArcId ?? "main",
+      currentBeatId: event.beatId ?? createId(draft, "beat"),
+      title: event.title,
+      allowedActions: event.actionPolicy?.allowedActions ?? DEFAULT_ALLOWED_ACTIONS,
+      forbiddenEscalations: event.actionPolicy?.forbiddenEscalations ?? [],
+      completionCriteria: event.actionPolicy?.completionCriteria ?? event.objectives,
+      nextBeatHints: event.actionPolicy?.nextBeatHints ?? [],
+    },
+    objectives: event.objectives,
+    threats: event.threats,
+    presentActorIds: event.presence?.presentActorIds,
+    allyActorIds: event.presence?.allyActorIds,
+    situation: event.situation,
+    reason: event.purpose,
+  };
+  const result = beginSceneBeat(draft, input);
+  return { message: result.message };
+}
+
+function completeBeat(
+  draft: State,
+  event: Extract<SceneEvent, { kind: "complete-beat" }>,
+): SceneEventResult {
+  const currentWindow = draft.public.scene.storyWindow;
+  if (currentWindow === null) {
+    throw new Error(
+      "complete-beat 需要当前存在 Scene Beat。当前没有 active beat。",
+    );
+  }
+  const completedBeatId = currentWindow.currentBeatId;
+  const transition = transitionSceneBeat(draft, {
+    completedBeatId,
+    resolveAllObjectives: true,
+    nextBeat: event.nextBeat === undefined ? null : event.nextBeat === null ? null : buildNextBeatInput(event, completedBeatId),
+    reason: event.outcome,
+  });
+  if (event.memory !== undefined) {
+    recordMemory(draft, {
+      kind: "record-major-event",
+      title: event.memory.title,
+      summary: event.memory.summary,
+      consequences: event.memory.consequences,
+      claims: event.memory.claims,
+    });
+  }
+  if (event.presence !== undefined) {
+    setScenePresence(draft, {
+      presentActorIds: event.presence.presentActorIds ?? draft.public.scene.presentActorIds,
+      allyActorIds: event.presence.allyActorIds ?? draft.public.allyActorIds,
+      reason: event.outcome,
+    });
+  }
+  if (event.situation !== undefined) {
+    updateScene(draft, { kind: "set-situation", situation: event.situation, reason: event.outcome });
+  }
+  const transitionMessage = transition.nextBeat?.message ?? "Scene Beat 已完成。";
+  return { message: transitionMessage };
+}
+
+function buildNextBeatInput(
+  event: Extract<SceneEvent, { kind: "complete-beat" }>,
+  currentBeatId: string,
+): SceneBeatInput | null {
+  if (event.nextBeat === null || event.nextBeat === undefined) return null;
+  const nb = event.nextBeat;
+  return {
+    storyWindow: {
+      currentArcId: currentBeatId, // keep same arc
+      currentBeatId: nb.beatId ?? `${currentBeatId}-next`,
+      title: nb.title,
+      allowedActions: nb.actionPolicy?.allowedActions ?? DEFAULT_ALLOWED_ACTIONS,
+      forbiddenEscalations: nb.actionPolicy?.forbiddenEscalations ?? [],
+      completionCriteria: nb.actionPolicy?.completionCriteria ?? nb.objectives,
+      nextBeatHints: nb.actionPolicy?.nextBeatHints ?? [],
+    },
+    objectives: nb.objectives,
+    threats: nb.threats,
+    presentActorIds: nb.presence?.presentActorIds ?? event.presence?.presentActorIds,
+    allyActorIds: nb.presence?.allyActorIds ?? event.presence?.allyActorIds,
+    situation: nb.situation ?? event.situation,
+    reason: event.outcome,
+  };
+}
 function applySceneEvent(draft: State, event: SceneEvent): SceneEventResult {
   switch (event.kind) {
     case "set-location":
@@ -194,6 +284,10 @@ function applySceneEvent(draft: State, event: SceneEvent): SceneEventResult {
       return clearThreat(draft, event);
     case "scene-presence":
       return setScenePresence(draft, event);
+    case "begin-beat":
+      return beginBeat(draft, event);
+    case "complete-beat":
+      return completeBeat(draft, event);
     default:
       throw new Error("unreachable scene event kind");
   }
@@ -260,10 +354,12 @@ function resolveObjective(
   );
   const objective = draft.public.scene.objectives.find((entry) => entry.id === objectiveId);
   if (objective === undefined) {
-    throw new Error(formatObjectiveIdNotFoundError(objectiveId, draft.public.scene.objectives));
+    throw new Error(
+      `resolve-objective 未找到匹配的目标: ${objectiveId}`,
+    );
   }
   // 局部推进只允许解决非最终目标；若这是本 beat 最后一个未解决目标，
-  // 收口必须走 progress_scene_beat complete（带 memory/presence/situation/nextBeat 结尾）。
+  // 收口必须走 complete-beat（带 memory/presence/situation/nextBeat 结尾）。
   const remainingActive = draft.public.scene.objectives.filter(
     (entry) => entry.status !== "resolved" && entry.id !== objectiveId,
   );
@@ -430,7 +526,7 @@ function resolveObjectiveIds(
 function formatActiveBeatExistsError(storyWindow: StoryWindowState): string {
   return [
     `无法开始新的 Scene Beat：当前已有 active beat ${storyWindow.currentBeatId}（${storyWindow.title}）。`,
-    "同一时间只能有一个 active storyWindow；请先使用 progress_scene_beat kind=complete 收口当前 beat。",
+    "同一时间只能有一个 active storyWindow；请先使用 scene event kind=complete-beat 收口当前 beat。",
   ].join("\n");
 }
 
@@ -440,19 +536,7 @@ function formatUnresolvedObjectivesError(
   return [
     "无法 transition beat：仍有未解决目标。",
     "可用 resolvedObjectiveSummaries 或 resolveAllObjectives=true。",
-    ...renderIdSummaryList(objectives),
-  ].join("\n");
-}
-
-function formatObjectiveIdNotFoundError(
-  objectiveId: SceneObjectiveId,
-  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
-): string {
-  return [
-    `目标不存在: ${objectiveId}`,
-    "",
-    "resolve-objective 只能操作当前 beat 的目标，不能跨 beat。",
-    "如果该目标属于下一 beat：先完成当前 beat（progress_scene_beat complete），下一 beat 的目标会在 complete+nextBeat 中设置。",
+    "如果该目标属于下一 beat：先完成当前 beat（complete-beat），下一 beat 的目标会在 complete+nextBeat 中设置。",
     "可用 objectiveId / objectiveSummary（当前 beat 的）：",
     ...renderIdSummaryList(objectives),
   ].join("\n");
@@ -463,7 +547,7 @@ function formatMissingObjectiveSelectorError(
 ): string {
   return [
     "resolve-objective 必须提供 objectiveId 或 objectiveSummary。",
-    "如果当前 beat 已全部完成，优先使用 progress_scene_beat kind=complete。",
+    "如果当前 beat 已全部完成，使用 complete-beat 收口。",
     "可用 objectiveId / objectiveSummary：",
     ...renderIdSummaryList(objectives),
   ].join("\n");
@@ -479,8 +563,8 @@ function formatObjectiveSummaryNotFoundError(
     ...renderSummaryList(objectives),
     "",
     "resolve-objective 只能解决当前 beat 的已有目标，不能跨 beat 操作。",
-    "如果该目标属于下一 beat：先等当前 beat 收口，再用 progress_scene_beat complete+nextBeat 携带目标，然后用 resolve-objective 解决。",
-    "如果当前 beat 已全部完成：不用 resolve-objective，直接用 progress_scene_beat complete 收口。",
+    "如果该目标属于下一 beat：先等当前 beat 收口，再用 complete-beat + nextBeat 携带目标，然后用 resolve-objective 解决。",
+    "如果当前 beat 已全部完成：不用 resolve-objective，直接用 complete-beat 收口。",
   ].join("\n");
 }
 
@@ -492,7 +576,7 @@ function assertActiveStoryWindow(draft: State, action: string): void {
         "objectives/threats 是 beat-scoped 状态，只能在 active storyWindow 内增删。",
         "",
         "如果是要解决目标：当前 beat 已结束后目标列表已清空，不需要再 resolve。",
-        "如果是要开始新场景：先用 progress_scene_beat kind=begin 锁定 beat 边界。",
+        "如果是要开始新场景：先用 scene event kind=begin-beat 锁定 beat 边界。",
         "普通状态变化（非 scene 事件）：直接通过 commit_turn 的其他 event kind 提交。",
       ].join("\n"),
     );
@@ -503,10 +587,10 @@ function formatLastObjectiveError(): string {
   return [
     "无法用 resolve-objective 解决本 beat 的最后一个未解决目标。",
     "",
-    "resolve-objective 只能解决非最终目标。最后一个目标必须通过 progress_scene_beat complete 收口，",
+    "resolve-objective 只能解决非最终目标。最后一个目标必须通过 complete-beat 收口，",
     "因为收口同时处理 memory/presence/situation/nextBeat 结尾，resolve-objective 没有这些能力。",
     "",
-    "做法：从 commit_turn 中移除这个 resolve-objective，另调用 progress_scene_beat kind=complete。",
+    "做法：从 commit_turn 中移除这个 resolve-objective，改用 begin/complete-beat 场景子事件。",
   ].join("\n");
 }
 

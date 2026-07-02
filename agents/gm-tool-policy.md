@@ -21,10 +21,10 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 
 ## Turn structure
 
-- Use `progress_scene_beat` for complex investigation, infiltration, confrontation, retreat, or battle preparation. `begin`/`complete` are the ONLY way to open or close a Scene Beat / story window.
-- Otherwise use `commit_turn` for aggregated state landing inside the current player action window.
-- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. `commit_turn` may resolve a non-final objective, but closing a beat's LAST objective requires `progress_scene_beat complete` (which handles the memory/presence/situation/next-beat wrap-up). `commit_turn` no longer auto-closes a window.
-- Canonical turn tools require top-level `time`.
+:- Every narrative turn ends with exactly one `commit_turn(time, events=[...])` call. Scene Beat lifecycle (begin/complete) is handled via scene events: use `{ kind:"scene", event:{ kind:"begin-beat", title, objectives, ... } }` to open a beat, and `{ kind:"scene", event:{ kind:"complete-beat", outcome, memory?, nextBeat?, ... } }` to close one.
+:- All state changes — economy, actor conditions, memory, outfit, scene presence, beat lifecycle — go through the same `commit_turn` events array.
+:- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. Closing a beat's LAST objective requires `complete-beat` which handles the memory/presence/situation/next-beat wrap-up. `resolve-objective` cannot resolve the last objective.
+:- `time` is mandatory in `commit_turn`.
 - Resolve one player action window and its immediate consequences per reply.
 - If continuing would require another canonical turn, stop at the next actionable window for the player.
 
@@ -74,9 +74,7 @@ Do not feed hidden GM facts into public-facing combat inputs.
 
 ## 每轮推进节奏
 
-标准链条：先分析当前场景 → 调用 3~5 个不同领域的工具建立状态 → 执行 commit_turn 落地状态 → 最终调用 submit_direction_packet 输出叙事。
-
-Beat 首轮或收尾转而用 progress_scene_beat + 工具建立状态。
+标准链条：先分析当前场景 → 调用 3~5 个不同领域的工具建立状态 → 执行 commit_turn（含 begin-beat/complete-beat 子事件）落地状态 → 最终调用 submit_direction_packet 输出叙事。
 
 【为什么要这样】领域工具调用建立叙事所需的状态，commit_turn 一次性对账落地，submit_direction_packet 输出叙事。不落地就写叙事会导致状态和叙事脱节。
 
