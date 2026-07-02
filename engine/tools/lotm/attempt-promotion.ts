@@ -29,10 +29,9 @@ import {
   SEQUENCE_RANKS,
   type SequenceRank,
 } from "../../core/state/state-enum-schemas.ts";
-import { createId } from "../../core/utils/ids.ts";
 import { assertOneOfString } from "../../core/utils/string-enum.ts";
 import { isRecord } from "../../core/utils/typebox-validation.ts";
-import { lookupStructuredAbilities } from "../lookup/ability-lookup.ts";
+import { assignCumulativeAbilities } from "../lookup/ability-lookup.ts";
 import { noNumberNarrativeHint } from "../runtime/narrative-hints.ts";
 import { runDomainEventTool } from "../system/domain-tool-runner.ts";
 
@@ -134,16 +133,8 @@ export function attemptPromotionTool(params: unknown, sessionManager: unknown): 
           actor.sequence!.actingCues = [];
         }
 
-        // 2. 能力填充
-        const pathwayName = PATHWAY_DISPLAY_NAMES[pathway] ?? pathway;
-        const rankLabel = RANK_DISPLAY_NAMES[targetRank] ?? targetRank;
-        const abilities = lookupStructuredAbilities(pathwayName, rankLabel);
-        actor.abilities = abilities.map((a) => ({
-          id: createId(draft, "ability"),
-          label: a.name,
-          summary: a.description,
-        }));
-        abilityCount = abilities.length;
+        // 2. 能力填充：累计分配（序列9到目标rank），跳过已有 label
+        abilityCount = assignCumulativeAbilities(draft, actor, pathway, targetRank);
       }
 
       // 记录必须落地的义务（过滤掉已自动处理的 actor-sequence）

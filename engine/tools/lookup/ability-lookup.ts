@@ -9,9 +9,14 @@
  * only=true → show only the target rank's abilities, no chain.
  */
 
+import type { PathwayId, PublicActorState, SequenceRank, State } from "../../core/state/state.ts";
+
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { PATHWAY_DISPLAY_NAMES, RANK_DISPLAY_NAMES } from "../../core/state/pathway-names.ts";
+import { createId } from "../../core/utils/ids.ts";
 
 // ===========================================================================
 // Types
@@ -361,6 +366,57 @@ export function lookupStructuredAbilities(
   const rankMap = pathwayIndex[pathwayDisplayName];
   if (rankMap === undefined) return [];
   return rankMap[rankLabel] ?? [];
+}
+
+/** 按 pathway 显示名 + 目标 rank 标签，返回序列9到该 rank 的累计能力条目 */
+export function lookupCumulativeStructuredAbilities(
+  pathwayDisplayName: string,
+  targetRankLabel: string,
+): Array<{ name: string; description: string; type: string }> {
+  const { pathwayIndex } = buildIndexes();
+  const rankMap = pathwayIndex[pathwayDisplayName];
+  if (rankMap === undefined) return [];
+
+  const targetIdx = RANK_ORDER.indexOf(targetRankLabel);
+  if (targetIdx === -1) return [];
+
+  const result: Array<{ name: string; description: string; type: string }> = [];
+  for (let i = 0; i <= targetIdx; i++) {
+    const rank = RANK_ORDER[i];
+    if (rank === undefined) continue;
+    const entries = rankMap[rank];
+    if (entries !== undefined) {
+      result.push(...entries);
+    }
+  }
+  return result;
+}
+
+/**
+ * 为 actor 分配从序列9到目标 rank 的累计能力，跳过已存在 label 的条目。
+ * 返回值是本次新增的能力数。
+ */
+export function assignCumulativeAbilities(
+  draft: State,
+  actor: PublicActorState,
+  pathway: PathwayId,
+  targetRank: SequenceRank,
+): number {
+  const pathwayName = PATHWAY_DISPLAY_NAMES[pathway] ?? pathway;
+  const rankLabel = RANK_DISPLAY_NAMES[targetRank] ?? targetRank;
+  const allAbilities = lookupCumulativeStructuredAbilities(pathwayName, rankLabel);
+  const existingLabels = new Set(actor.abilities.map((a) => a.label));
+  let count = 0;
+  for (const ability of allAbilities) {
+    if (existingLabels.has(ability.name)) continue;
+    actor.abilities.push({
+      id: createId(draft, "ability"),
+      label: ability.name,
+      summary: ability.description,
+    });
+    count++;
+  }
+  return count;
 }
 
 export type { ParsedQuery as AbilityParsedQuery };

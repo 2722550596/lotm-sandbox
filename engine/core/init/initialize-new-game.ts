@@ -21,6 +21,7 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import { getCampaignPreset, type OpeningHooks } from "../../../data/campaign-presets.ts";
+import { assignCumulativeAbilities } from "../../tools/lookup/ability-lookup.ts";
 import { OUTFIT_STATE_SCHEMA } from "../actor/actor-schema.ts";
 import { setScenePresence, upsertActor } from "../actor/actor.ts";
 import { recordMemory } from "../knowledge/memory.ts";
@@ -345,6 +346,18 @@ export function initializeNewGame(
       reason: input.reason,
     });
     steps.push("setup-beyonder-protagonist");
+    if (input.protagonist.abilities === undefined) {
+      const actor = draft.public.actors[actorId];
+      if (actor && actor.kind === "beyonder") {
+        const added = assignCumulativeAbilities(
+          draft,
+          actor,
+          input.protagonist.pathway,
+          input.protagonist.rank,
+        );
+        if (added > 0) steps.push("auto-assign-abilities");
+      }
+    }
   }
 
   if (input.presence !== undefined) {
