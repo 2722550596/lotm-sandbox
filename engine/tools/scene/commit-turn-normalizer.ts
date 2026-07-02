@@ -30,6 +30,8 @@ const TURN_EVENT_KINDS = [
   "economy",
   "memory",
   "outfit",
+  "hint-secret",
+  "hook",
 ] as const;
 
 export function normalizeTurnCommitInput(params: unknown): TurnCommitInput {
@@ -85,9 +87,19 @@ function normalizeTurnCommitEvent(value: unknown, summary: string): TurnCommitEv
           OUTFIT_TURN_VALIDATOR,
         ),
       };
+    case "hint-secret":
+      return {
+        kind: normalizedKind,
+        event: extractDomainEvent(event, "hint-secret.event"),
+      } as unknown as TurnCommitEvent;
+    case "hook":
+      return {
+        kind: normalizedKind,
+        event: extractDomainEvent(event, "hook.event"),
+      } as unknown as TurnCommitEvent;
     default:
       throw new Error(
-        `非法 commit_turn event.kind: ${formatUnknown(event["kind"])}。允许: scene / actor-condition / tracked-item / economy / memory / outfit。`,
+        `非法 commit_turn event.kind: ${formatUnknown(event["kind"])}。允许: ${TURN_EVENT_KINDS.join(" / ")}。`,
       );
   }
 }

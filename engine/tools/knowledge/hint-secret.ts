@@ -74,7 +74,7 @@ export const hintSecretToolDefinition: DomainToolDefinition = {
     hintSecretTool(params, ctx.sessionManager),
 };
 
-function findSecretSlot(
+export function findSecretSlot(
   draft: State,
   secretId: string,
 ): { revealState: string } | null {
@@ -97,7 +97,7 @@ function findSecretSlot(
   return null;
 }
 
-function collectAllSecretIds(draft: State): string[] {
+export function collectAllSecretIds(draft: State): string[] {
   const ids: string[] = [];
   for (const bundle of Object.values(draft.secrets.actorStates)) {
     const slots = bundle.secrets;

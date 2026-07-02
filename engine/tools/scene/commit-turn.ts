@@ -61,7 +61,7 @@ export function commitTurnTool(params: unknown, sessionManager: unknown): ToolRe
 export const commitTurnToolDefinition: DomainToolDefinition = {
   name: "commit_turn",
   description:
-    "每轮叙事结束时，用这个工具一次性提交本轮所有状态变化。把这轮里发生的各种变化——经济收支、记忆记录、角色状态、场景更新——打包放进 events 数组。每轮只能调一次，且调完后必须调 submit_direction_packet 才能调下一次。\n\n时间推进：顶层 time 必填，elapsedMinutes >= 1（即使感觉只过了瞬间也至少 1 分钟）。时间推进是独立的，不要写在 events 里。\n地点移动：用 time.kind=travel，不用写 events。\n\nevents 数组示例：\n  { kind: \"economy\", event: { purseId: \"purse-xxx\", amount: 9, reason: \"买面包\" } }\n  { kind: \"memory\", event: { kind: \"pin-fact\", scope: \"protagonist\", subject: \"克莱恩\", text: \"...\" } }\n  { kind: \"actor-condition\", event: { kind: \"add-affliction\", actorId: \"...\", ... } }\n  { kind: \"scene\", event: { kind: \"begin-beat\", title: \"调查教堂\", objectives: [...] } }\n  { kind: \"scene\", event: { kind: \"complete-beat\", outcome: \"...\" } }\n\n允许的 event kind：\n- scene：场景更新（含 begin-beat/complete-beat 子事件），也是创建/收口 Scene Beat 的唯一方式\n- scene-presence：调整当前场景的在场 NPC\n- actor-condition：给角色添加/移除状态效果或装备\n- outfit：更换角色的外貌/着装\n- economy：经济收支\n- memory：记录记忆或钉住关键事实\n\n序列晋升用 attempt_promotion，扮演反馈用 record_acting_feedback，它们不属于每轮常规操作，不走 commit_turn。\n\n【什么时候用】\n- 每轮叙事正文写完之后，把该落地的状态变化一次性提交\n- events 里可同时包含状态变化和 beat 操作（begin-beat/complete-beat）\n\n【不要这样做】\n- 同一轮内调多次 commit_turn（有 guard 阻止）\n- 不调 commit_turn 就直接 submit_direction_packet needsRender=true（有 guard 阻止）",
+    "每轮叙事结束时，用这个工具一次性提交本轮所有状态变化。把这轮里发生的各种变化——经济收支、记忆记录、角色状态、场景更新——打包放进 events 数组。每轮只能调一次，且调完后必须调 submit_direction_packet 才能调下一次。\n\n时间推进：顶层 time 必填，elapsedMinutes >= 1（即使感觉只过了瞬间也至少 1 分钟）。时间推进是独立的，不要写在 events 里。\n地点移动：用 time.kind=travel，不用写 events。\n\nevents 数组示例：\n  { kind: \"economy\", event: { purseId: \"purse-xxx\", amount: 9, reason: \"买面包\" } }\n  { kind: \"memory\", event: { kind: \"pin-fact\", scope: \"protagonist\", subject: \"克莱恩\", text: \"...\" } }\n  { kind: \"actor-condition\", event: { kind: \"add-affliction\", actorId: \"...\", ... } }\n  { kind: \"scene\", event: { kind: \"begin-beat\", title: \"调查教堂\", objectives: [...] } }\n  { kind: \"scene\", event: { kind: \"complete-beat\", outcome: \"...\" } }\n  { kind: \"hint-secret\", event: { secretId: \"...\", hintText: \"教堂地下有东西\", reason: \"...\" } }\n  { kind: \"hook\", event: { kind: \"surface\", hookId: \"...\", novelty: \"新线索\" } }\n\n允许的 event kind：\n- scene：场景更新（含 begin-beat/complete-beat 子事件），也是创建/收口 Scene Beat 的唯一方式\n- scene-presence：调整当前场景的在场 NPC\n- actor-condition：给角色添加/移除状态效果或装备\n- outfit：更换角色的外貌/着装\n- economy：经济收支\n- memory：记录记忆或钉住关键事实\n- hint-secret：对隐藏秘密给出暗示（foreshadowed + 创建 hook）\n- hook：管理叙事张力条目（surface/park/escalate/pay/retire）\n\n序列晋升用 attempt_promotion，扮演反馈用 record_acting_feedback，配置秘密用 configure_secret。\n\n【什么时候用】\n- 每轮叙事正文写完之后，把该落地的状态变化一次性提交\n- events 里可同时包含状态变化和 beat 操作（begin-beat/complete-beat）\n\n【不要这样做】\n- 同一轮内调多次 commit_turn（有 guard 阻止）\n- 不调 commit_turn 就直接 submit_direction_packet needsRender=true（有 guard 阻止）",
   parameters: Type.Object({
     summary: Type.Optional(
       Type.String({
@@ -73,7 +73,7 @@ export const commitTurnToolDefinition: DomainToolDefinition = {
       Type.Object({
         kind: Type.String({
           description:
-            "scene / scene-presence / actor-condition / outfit / economy / memory",
+            "scene / scene-presence / actor-condition / outfit / economy / memory / hint-secret / hook",
         }),
         event: Type.Unknown({
           description:
@@ -93,6 +93,8 @@ export const commitTurnToolDefinition: DomainToolDefinition = {
             "  memory→{ kind:\"pin-fact\"|\"record-major-event\"|\"record-daily-summary\", scope, subject, text, ... }\n" +
             "  economy→{ kind, amount, purseId?, ... }\n" +
             "  outfit→{ actorId, outfit, ... }\n" +
+            "  hint-secret→{ secretId, hintText, reason }\n" +
+            '  hook→{ kind:"open"|"surface"|"park"|"escalate"|"pay"|"retire", hookId?, label?, novelty?, reason }\n' +
             "不包含时间/移动。",
         }),
       }),

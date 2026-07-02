@@ -17,6 +17,15 @@ import { collectBackstageDueNotices } from "../backstage/faction-clock.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
 import { appendTurnLogEntry } from "./turn-log.ts";
 import { applyTurnTime } from "./turn-time.ts";
+import {
+  openHook,
+  surfaceHook,
+  parkHook,
+  escalateHook,
+  payHook,
+  retireHook,
+} from "../ledger/hooks.ts";
+import { findSecretSlot, collectAllSecretIds } from "../../tools/knowledge/hint-secret.ts";
 
 export interface OutfitTurnEvent {
   actorId: string;
@@ -24,6 +33,13 @@ export interface OutfitTurnEvent {
   reason: string;
 }
 
+export type HookCommitEvent =
+  | { kind: "open"; label: string; reason: string }
+  | { kind: "surface"; hookId: string; novelty: string; reason: string }
+  | { kind: "park"; hookId: string; reason: string }
+  | { kind: "escalate"; hookId: string; novelty: string; reason: string }
+  | { kind: "pay"; hookId: string; reason: string }
+  | { kind: "retire"; hookId: string; reason: string };
 
 export type TurnCommitEvent =
   | { kind: "scene"; event: SceneEvent }
@@ -31,7 +47,9 @@ export type TurnCommitEvent =
   | { kind: "tracked-item"; event: TrackedItemEvent }
   | { kind: "economy"; event: EconomyEvent }
   | { kind: "memory"; event: MemoryEvent }
-  | { kind: "outfit"; event: OutfitTurnEvent };
+  | { kind: "outfit"; event: OutfitTurnEvent }
+  | { kind: "hint-secret"; event: { secretId: string; hintText: string; reason: string } }
+  | { kind: "hook"; event: HookCommitEvent };
 
 export interface TurnCommitInput {
   summary: string;
@@ -45,7 +63,9 @@ export type TurnCommitEventResult =
   | { kind: "tracked-item"; result: TrackedItemEventResult }
   | { kind: "economy"; result: EconomyEventResult }
   | { kind: "memory"; result: MemoryEventResult }
-  | { kind: "outfit"; result: { message: string } };
+  | { kind: "outfit"; result: { message: string } }
+  | { kind: "hint-secret"; result: { message: string } }
+  | { kind: "hook"; result: { message: string } };
 export interface TurnCommitResult {
   message: string;
   results: TurnCommitEventResult[];
@@ -102,10 +122,60 @@ function applyTurnEvent(
           event.event.reason,
         ),
       };
+    case "hint-secret":
+      return { kind: event.kind, result: applyHintSecretEvent(draft, event.event) };
+    case "hook":
+      return { kind: event.kind, result: applyHookEvent(draft, event.event) };
     default:
       throw new Error("unreachable turn commit event kind");
   }
 }
+
+function applyHintSecretEvent(
+  draft: State,
+  input: { secretId: string; hintText: string; reason: string },
+): { message: string } {
+  const found = findSecretSlot(draft, input.secretId);
+  if (found === null) {
+    const available = collectAllSecretIds(draft);
+    throw new Error(
+      `hint-secret: 未找到 secret ${input.secretId}。可用 secrets: ${available.length > 0 ? available.join(", ") : "无"}`,
+    );
+  }
+  if (found.revealState === "revealed") {
+    throw new Error(`hint-secret: secret ${input.secretId} 已完全揭示。`);
+  }
+  found.revealState = "foreshadowed";
+  const hook = openHook(draft, input.hintText, input.secretId);
+  return { message: `秘密已暗示：${input.secretId} → hook ${hook.id}` };
+}
+
+function applyHookEvent(
+  draft: State,
+  event: HookCommitEvent,
+): { message: string } {
+  switch (event.kind) {
+    case "open":
+      openHook(draft, event.label);
+      return { message: `hook 已创建：${event.label}` };
+    case "surface":
+      surfaceHook(draft, event.hookId, event.novelty);
+      return { message: `hook ${event.hookId} 已复现` };
+    case "park":
+      parkHook(draft, event.hookId, event.reason);
+      return { message: `hook ${event.hookId} 已暂存` };
+    case "escalate":
+      escalateHook(draft, event.hookId, event.novelty);
+      return { message: `hook ${event.hookId} 已升级` };
+    case "pay":
+      payHook(draft, event.hookId, event.reason);
+      return { message: `hook ${event.hookId} 已兑现` };
+    case "retire":
+      retireHook(draft, event.hookId, event.reason);
+      return { message: `hook ${event.hookId} 已退场` };
+  }
+}
+
 
 function collectWarnings(draft: State, input: TurnCommitInput): string[] {
   const warnings: string[] = [];
