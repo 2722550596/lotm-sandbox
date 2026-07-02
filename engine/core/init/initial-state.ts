@@ -80,6 +80,7 @@ export function createInitialState(protagonistActorId: string = PROTAGONIST_ACTO
         ],
         eventLog: [],
         dailySummaries: [],
+        dailyEvents: [],
       },
       turnLog: [],
       obligations: [],

@@ -29,6 +29,8 @@ function formatResult(params: MemoryEvent, result: MemoryEventResult): string {
       return `重大事件已记录：${result.eventId ?? "?"}\n- ${params.title}: ${params.summary}`;
     case "record-daily-summary":
       return `日常摘要已记录：${result.dailySummaryId ?? "?"}\n- ${params.summary}`;
+    case "record-daily-event":
+      return `日常事件已记录：${result.dailyEventId ?? "?"}\n- [${params.eventKind}] ${params.title}: ${params.summary}`;
     default:
       return "未知记忆事件类型。";
   }
@@ -47,19 +49,21 @@ function normalizeSourceEventId(params: unknown): unknown {
 export const recordMemoryToolDefinition: DomainToolDefinition = {
   name: "record_memory",
   description:
-    "写入玩家已知的长期事实、重大事件或日常摘要。每条 public memory 必须给 claims（事实类型+确定性+证据）；普通事实用 kind=mundane。\n\n" +
+    "写入玩家已知的记忆。重大变化用 record-major-event + claims（非 mundane 类 claim 必须提供证据或 secret 关联）；单项日常记录用 record-daily-event；日终摘要用 record-daily-summary；长期事实钉用 pin-fact。\n\n" +
     "【使用边界】\n" +
-    "- 身世/契约/生死/晋升序列/污染失控/阵营/永久缺损等重大变化：record-major-event + claims\n" +
-    "- 单次采购/调查/战斗结论等需长期保留的事件：也用 record-major-event\n" +
-    "- 仅半天以上跳过、日终/章节摘要：record-daily-summary\n\n" +
+    "- 重大变化（晋升/契约/战斗结论/阵营/永久缺损等可信度很重要的事件）：record-major-event + claims\n" +
+    "- 单项日常事件（采购/会面/移动/观察/关系互动等不需要审计的笔记）：record-daily-event + eventKind 分类\n" +
+    "- 半天以上跳过、日终/章节摘要：record-daily-summary\n" +
+    "- 离散事实钉（玩家身份/已知盟友名单等长期稳定事实）：pin-fact\n\n" +
     "禁区：\n" +
     "- 记 GM 猜测、幕后真相、闲聊或短暂情绪\n" +
     "- 把玩家未确认秘密写进 public memory\n" +
     "- 非 mundane claim 缺 evidence/relatedSecretSlotIds 却标 confirmed/observed/inferred\n" +
-    "- 用 record-daily-summary 绕过 claims 记单次事件",
+    "- 用 record-daily-summary 或 record-daily-event 绕过 claims 记重大事件",
   parameters: Type.Object({
     kind: Type.String({
-      description: "允许: pin-fact / record-major-event / record-daily-summary",
+      description:
+        "允许: pin-fact / record-major-event / record-daily-event / record-daily-summary",
     }),
     scope: Type.Optional(
       Type.String({ description: "可选范围，允许: protagonist / npc / faction / world" }),
@@ -71,7 +75,7 @@ export const recordMemoryToolDefinition: DomainToolDefinition = {
       Type.Object({
         kind: Type.String({
           description:
-            "claim 类型。mundane=普通事实，不需要证据。非 mundane（identity/location/affiliation/motive/ability/resource/relationship/event-cause/world-fact）如果标 confirmed/observed/inferred，必须提供 evidence 或关联已揭示的 secret（relatedSecretSlotIds）",
+            "claim 类型（仅 record-major-event 使用）。mundane=普通事实（legacy 兼容，建议日常记录用 record-daily-event）。非 mundane（identity/location/affiliation/motive/ability/resource/relationship/event-cause/world-fact）如果标 confirmed/observed/inferred，必须提供 evidence 或关联已揭示的 secret（relatedSecretSlotIds）",
         }),
         statement: Type.String({
           description: "事实陈述，如「克莱恩能逆走四步上灰雾」",
@@ -97,8 +101,23 @@ export const recordMemoryToolDefinition: DomainToolDefinition = {
         ),
       }),
     ),
-    title: Type.Optional(Type.String()),
-    summary: Type.Optional(Type.String()),
+    eventKind: Type.Optional(
+      Type.String({
+        description:
+          "record-daily-event 必填：日常事件类型。允许: mundane / relationship / location / shopping / meeting / travel / observation",
+      }),
+    ),
+    title: Type.Optional(
+      Type.String({
+        description: "record-major-event / record-daily-event 必填：事件标题",
+      }),
+    ),
+    summary: Type.Optional(
+      Type.String({
+        description:
+          "record-major-event / record-daily-event / record-daily-summary 必填：事件描述",
+      }),
+    ),
     consequences: Type.Optional(Type.Array(Type.String())),
     startDate: Type.Optional(
       Type.String({

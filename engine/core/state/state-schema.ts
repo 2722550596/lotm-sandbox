@@ -296,10 +296,29 @@ const DAILY_SUMMARY_MEMORY_SCHEMA = Type.Object({
   summary: NON_EMPTY_STRING_SCHEMA,
 });
 
+const DAILY_EVENT_KINDS = [
+  "mundane",
+  "relationship",
+  "location",
+  "shopping",
+  "meeting",
+  "travel",
+  "observation",
+] as const;
+
+const DAILY_EVENT_MEMORY_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  time: ISO_INSTANT_SCHEMA,
+  eventKind: stringEnumSchema(DAILY_EVENT_KINDS),
+  title: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+});
+
 const CAMPAIGN_MEMORY_SCHEMA = Type.Object({
   pinnedFacts: Type.Array(MEMORY_FACT_SCHEMA),
   eventLog: Type.Array(MAJOR_EVENT_MEMORY_SCHEMA),
   dailySummaries: Type.Array(DAILY_SUMMARY_MEMORY_SCHEMA),
+  dailyEvents: Type.Array(DAILY_EVENT_MEMORY_SCHEMA),
 });
 
 // ---------------------------------------------------------------------------
@@ -611,6 +630,9 @@ function normalizeStateDatesInPlace(state: State): void {
   for (const dailySummary of memory.dailySummaries) {
     dailySummary.startDate = normalizeIsoInstant(dailySummary.startDate, "dailySummary.startDate");
     dailySummary.endDate = normalizeIsoInstant(dailySummary.endDate, "dailySummary.endDate");
+  }
+  for (const dailyEvent of memory.dailyEvents) {
+    dailyEvent.time = normalizeIsoInstant(dailyEvent.time, "dailyEvent.time");
   }
 
   for (const event of state.secrets.secretEventLog) {

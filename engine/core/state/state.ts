@@ -21,7 +21,7 @@ import type {
   TrackedItemVisibility,
 } from "./state-enum-schemas.ts";
 import type { CurrencyType } from "../economy/economy-schema.ts";
-import type { MemoryClaim } from "../knowledge/memory-schema.ts";
+import type { DailyEventKind, MemoryClaim } from "../knowledge/memory-schema.ts";
 
 export type {
   OffscreenEvent,
@@ -66,6 +66,7 @@ export type StoryBeatId = string;
 export type MemoryFactId = string;
 export type MajorEventMemoryId = string;
 export type DailySummaryMemoryId = string;
+export type DailyEventMemoryId = string;
 export type SceneObjectiveStatus = "active" | "blocked" | "resolved";
 export type Percent = number;
 
@@ -514,6 +515,7 @@ export interface CampaignMemory {
   pinnedFacts: MemoryFact[];
   eventLog: MajorEventMemory[];
   dailySummaries: DailySummaryMemory[];
+  dailyEvents: DailyEventMemory[];
 }
 
 export interface MemoryFact {
@@ -538,6 +540,14 @@ export interface DailySummaryMemory {
   id: DailySummaryMemoryId;
   startDate: string;
   endDate: string;
+  summary: string;
+}
+
+export interface DailyEventMemory {
+  id: DailyEventMemoryId;
+  time: string;
+  eventKind: DailyEventKind;
+  title: string;
   summary: string;
 }
 

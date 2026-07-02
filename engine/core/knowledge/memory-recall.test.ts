@@ -13,6 +13,13 @@ void test("recallMemory returns all memory when no filters applied", () => {
     summary: "Met Rin at school gate",
     consequences: ["alliance formed"],
   });
+  draft.public.memory.dailyEvents.push({
+    id: "daily-evt-1",
+    time: "2004-01-30T18:00:00.000Z",
+    eventKind: "shopping",
+    title: "Evening shopping",
+    summary: "Bought supplies at the market",
+  });
   draft.public.memory.pinnedFacts.push({
     id: "fact-2",
     scope: "npc",
@@ -27,7 +34,9 @@ void test("recallMemory returns all memory when no filters applied", () => {
   // Default fact from createInitialState + our additions
   assert.ok(result.pinnedFacts.length >= 2);
   assert.equal(result.events.length, 1);
-  assert.ok(result.totalMatches >= 3);
+  assert.equal(result.dailyEvents.length, 1);
+  assert.equal(result.dailyEvents[0]?.eventKind, "shopping");
+  assert.ok(result.totalMatches >= 4);
 });
 
 void test("recallMemory filters by keywords (OR matching)", () => {

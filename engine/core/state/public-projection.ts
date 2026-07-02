@@ -354,17 +354,31 @@ function formatRelativeEventTime(eventIso: string, currentIso: string): string {
 }
 
 function formatRecentEvents(publicState: PublicGameState): string {
-  const recent = publicState.memory.eventLog.slice(-3);
-  return recent.length === 0
-    ? "无"
-    : recent
-        .map((event) => {
-          const consequences =
-            event.consequences.length > 0 ? ` → ${event.consequences.join(";")}` : "";
-          const relativeTime = formatRelativeEventTime(event.time, publicState.clock.currentAt);
-          return `${event.title}：${event.summary}${consequences}（${relativeTime}）`;
-        })
-        .join(";");
+  const recentEvents = publicState.memory.eventLog.slice(-3);
+  const recentDaily = publicState.memory.dailyEvents.slice(-3);
+  const parts: string[] = [];
+
+  if (recentEvents.length > 0) {
+    parts.push(
+      ...recentEvents.map((event) => {
+        const consequences =
+          event.consequences.length > 0 ? ` → ${event.consequences.join(";")}` : "";
+        const relativeTime = formatRelativeEventTime(event.time, publicState.clock.currentAt);
+        return `${event.title}：${event.summary}${consequences}（${relativeTime}）`;
+      }),
+    );
+  }
+
+  if (recentDaily.length > 0) {
+    parts.push(
+      ...recentDaily.map((event) => {
+        const relativeTime = formatRelativeEventTime(event.time, publicState.clock.currentAt);
+        return `[${event.eventKind}] ${event.title}：${event.summary}（${relativeTime}）`;
+      }),
+    );
+  }
+
+  return parts.length === 0 ? "无" : parts.join(";");
 }
 
 function formatPinnedFacts(publicState: PublicGameState): string[] {

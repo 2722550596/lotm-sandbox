@@ -149,19 +149,17 @@ void test("recordMemory rejects hypothesis worded as confirmed fact", () => {
   );
 });
 
-void test("recordMemory rejects daily summaries for single events", () => {
+void test("recordMemory daily summary accepts any summary after assertDailySummaryScope removed", () => {
   const draft = createInitialState();
 
-  assert.throws(
-    () =>
-      recordMemory(draft, {
-        kind: "record-daily-summary",
-        startDate: "2004-01-30T00:00:00.000Z",
-        endDate: "2004-01-30T23:59:00.000Z",
-        summary: "在廷根市商业街购入两件防污斗篷，花费2400便士。",
-      }),
-    /单次采购\/调查\/战斗结论请用 record-major-event/,
-  );
+  const result = recordMemory(draft, {
+    kind: "record-daily-summary",
+    startDate: "2004-01-30T00:00:00.000Z",
+    endDate: "2004-01-30T23:59:00.000Z",
+    summary: "在廷根市商业街购入两件防污斗篷，花费2400便士。",
+  });
+
+  assert.equal(draft.public.memory.dailySummaries[0]?.id, result.dailySummaryId);
 });
 
 void test("recordMemory accepts actual daily summaries", () => {
@@ -175,4 +173,36 @@ void test("recordMemory accepts actual daily summaries", () => {
   });
 
   assert.equal(draft.public.memory.dailySummaries[0]?.id, result.dailySummaryId);
+});
+
+void test("recordMemory records a daily event", () => {
+  const draft = createInitialState();
+
+  const result = recordMemory(draft, {
+    kind: "record-daily-event",
+    eventKind: "shopping",
+    title: "采购物资",
+    summary: "在廷根市商业街购入两件防污斗篷。",
+  });
+
+  const event = draft.public.memory.dailyEvents[0];
+  assert.equal(event?.id, result.dailyEventId);
+  assert.equal(event?.eventKind, "shopping");
+  assert.equal(event?.title, "采购物资");
+  assert.equal(event?.summary, "在廷根市商业街购入两件防污斗篷。");
+  assert.ok(typeof event?.time === "string");
+});
+
+void test("recordMemory daily event does not require claims", () => {
+  const draft = createInitialState();
+
+  const result = recordMemory(draft, {
+    kind: "record-daily-event",
+    eventKind: "observation",
+    title: "观察报告",
+    summary: "观察到目标在市场中与神秘人接触。",
+  });
+
+  assert.ok(result.dailyEventId !== undefined);
+  assert.equal(draft.public.memory.dailyEvents.length, 1);
 });

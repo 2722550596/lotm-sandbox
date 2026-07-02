@@ -7,6 +7,7 @@
 
 import type {
   CampaignMemory,
+  DailyEventMemory,
   DailySummaryMemory,
   MajorEventMemory,
   MemoryFact,
@@ -29,6 +30,7 @@ export interface RecallMemoryQuery {
 export interface RecallMemoryResult {
   pinnedFacts: MemoryFact[];
   events: MajorEventMemory[];
+  dailyEvents: DailyEventMemory[];
   dailySummaries: DailySummaryMemory[];
   totalMatches: number;
 }
@@ -41,16 +43,34 @@ export function recallMemory(state: State, query: RecallMemoryQuery): RecallMemo
 
   const matchedFacts = filterPinnedFacts(memory, query);
   const matchedEvents = filterEvents(memory, query);
+  const matchedDailyEvents = filterDailyEvents(memory, query);
   const matchedSummaries = filterSummaries(memory, query);
 
-  const totalMatches = matchedFacts.length + matchedEvents.length + matchedSummaries.length;
+  const totalMatches =
+    matchedFacts.length +
+    matchedEvents.length +
+    matchedDailyEvents.length +
+    matchedSummaries.length;
 
   return {
     pinnedFacts: matchedFacts.slice(-limit),
     events: matchedEvents.slice(-limit),
+    dailyEvents: matchedDailyEvents.slice(-limit),
     dailySummaries: matchedSummaries.slice(-limit),
     totalMatches,
   };
+}
+
+function filterDailyEvents(memory: CampaignMemory, query: RecallMemoryQuery): DailyEventMemory[] {
+  return memory.dailyEvents.filter((event) => matchesDailyEvent(event, query));
+}
+
+function matchesDailyEvent(event: DailyEventMemory, query: RecallMemoryQuery): boolean {
+  const haystack = `${event.title} ${event.summary}`;
+  if (query.actorId !== undefined && !matchesText(haystack, query.actorId)) {
+    return false;
+  }
+  return matchesKeywords(haystack, query);
 }
 
 function filterPinnedFacts(memory: CampaignMemory, query: RecallMemoryQuery): MemoryFact[] {

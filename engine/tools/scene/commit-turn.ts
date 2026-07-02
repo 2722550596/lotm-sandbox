@@ -15,13 +15,18 @@ import { normalizeTurnCommitInput } from "./commit-turn-normalizer.ts";
 import { timePolicySchema } from "./time-policy-tool-schema.ts";
 
 // 本轮是否产生机械代价：用于打断后台 no-cost 连击。可检测核心集。
-const COST_EVENT_KINDS = new Set(["actor-condition", "economy", "memory"]);
+// record-daily-event 是日常记录，不计入 cost。
+const COST_EVENT_KINDS = new Set(["actor-condition", "economy"]);
 function turnHasCost(events: readonly TurnCommitEvent[]): boolean {
   return events.some((event) => {
     if (COST_EVENT_KINDS.has(event.kind)) {
       return true;
     }
-    return event.kind === "scene" && event.event.kind === "add-threat";
+    if (event.kind === "scene" && event.event.kind === "add-threat") {
+      return true;
+    }
+    // memory 中只有 record-major-event 才计入 cost（重大事件=有代价）
+    return event.kind === "memory" && event.event.kind === "record-major-event";
   });
 }
 
@@ -85,7 +90,7 @@ export const commitTurnToolDefinition: DomainToolDefinition = {
             '    clear-threat → { kind:"clear-threat", threatSummary/threatId?, reason }\n' +
             '    scene-presence → { kind:"scene-presence", presentActorIds, allyActorIds, reason }\n' +
             '  actor-condition→{ kind:"add-affliction"|"resolve-condition"|"update-wound", actorId, ... }\n' +
-            '  memory→{ kind:"pin-fact"|"record-major-event"|"record-daily-summary", scope, subject, text, ... }\n' +
+            '  memory→{ kind:"pin-fact"|"record-major-event"|"record-daily-event"|"record-daily-summary", scope, subject, text, ... }\n' +
             "  economy→{ kind, amount, purseId?, ... }\n" +
             "  outfit→{ actorId, outfit, ... }\n" +
             "  hint-secret→{ secretId, hintText, reason }\n" +
