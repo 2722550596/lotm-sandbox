@@ -86,7 +86,7 @@ function completeCurrentSceneBeat(
   const currentWindow = draft.public.scene.storyWindow;
   if (currentWindow === null) {
     throw new Error(
-      "progress_scene_beat complete 需要当前存在 Scene Beat。当前没有 active beat；复杂新场景请用 progress_scene_beat begin，非 Scene Beat lifecycle 的状态变化请用 commit_turn。",
+      "complete-beat 需要当前存在 Scene Beat。当前没有 active beat；新场景请用 scene event kind=begin-beat，普通状态变化通过 commit_turn 的其他 event kind 提交。",
     );
   }
 
@@ -234,7 +234,7 @@ function formatBeginMessage(time: SceneEventResult, beat: SceneBeatResult): stri
   return [
     time.message,
     beat.message,
-    "叙事节奏提醒：你刚刚用 progress_scene_beat begin 开启了一个新的 Scene Beat，已经为接下来的叙事铺好了舞台。\n这个回复里不应该再继续推进另一个前台冲突——接下来该做的是把入口写活：\n- 这个 Beat 为什么紧迫、诱人、或者让玩家不得不接？（入口压力）\n- 玩家角色在这个 Beat 里能做什么、往哪个方向走？（可接点）\n\n让新 Beat 的入口本身成为正文的焦点，而不是匆匆开场就跳到下一段。",
+    "叙事节奏提醒：你刚刚用 begin-beat scene 事件开启了一个新的 Scene Beat，已经为接下来的叙事铺好了舞台。\n这个回复里不应该再继续推进另一个前台冲突——接下来该做的是把入口写活：\n- 这个 Beat 为什么紧迫、诱人、或者让玩家不得不接？（入口压力）\n- 玩家角色在这个 Beat 里能做什么、往哪个方向走？（可接点）\n\n让新 Beat 的入口本身成为正文的焦点，而不是匆匆开场就跳到下一段。",
   ].join("\n");
 }
 

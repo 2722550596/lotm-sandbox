@@ -1,6 +1,6 @@
 import { Type } from "typebox";
 
-/** commit_turn 与 progress_scene_beat 共享的顶层 time 裁决入口 schema。 */
+/** commit_turn 的顶层 time 裁决入口 schema。 */
 export function timePolicySchema(): ReturnType<typeof Type.Object> {
   return Type.Object({
     kind: Type.String({

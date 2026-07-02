@@ -89,7 +89,7 @@ export const clearObligationToolDefinition: DomainToolDefinition = {
     OBLIGATION_KINDS.join(" / ") +
     "\n\n" +
     "禁区：\n" +
-    "- 正常流程不应使用——正确路径是通过 commit_turn 或 progress_scene_beat 落地义务\n" +
+    "- 正常流程不应使用——正确路径是通过 commit_turn 落地义务\n" +
     "- 清 obligation 不回滚对应的 state 副作用；清理前确认对应领域事件是否需要补齐",
   parameters: Type.Object({
     obligationId: Type.Optional(

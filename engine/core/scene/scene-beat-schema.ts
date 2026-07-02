@@ -16,11 +16,9 @@ import { parseTurnTimePolicySchema } from "../turn/turn-time-schema.ts";
 import { parseTaggedTypeBoxUnion, trimStringsDeep } from "../utils/typebox-validation.ts";
 
 /**
- * Scene Beat lifecycle（progress_scene_beat 工具）边界 schema：单一事实来源。
- * 对应输入类型由此派生（scene-beat-lifecycle.ts / scene.ts re-export 原名）。
- *
- * time 字段在 schema 层放行（Unsafe 占位），实际由 parseTurnTimePolicySchema
- * 校验——保留其 tagged-kind 报错与 elapsedMinutes > 0 归一化。
+ * Scene Beat lifecycle schema：formerly progress_scene_beat tool schema.
+ * Now part of commit_turn scene events (begin-beat/complete-beat sub-kinds),
+ * but kept here for SceneBeatInput / SceneBeatProgressResult type derivation.
  */
 const TURN_TIME_DELEGATED_SCHEMA = Type.Unsafe<TurnTimePolicy>({});
 

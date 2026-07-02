@@ -225,7 +225,7 @@ export function groupTurns(path: readonly RawEntry[]): AuditTurn[] {
 
 // ---------- 指标 ----------
 
-const CANONICAL_COMMIT_TOOLS = new Set(["commit_turn"]);
+const CANONICAL_COMMIT_TOOLS = new Set(["commit_turn", "progress_scene_beat"]);
 
 /** 不改变 state 的只读工具；get_status 冗余判定用 */
 const READ_ONLY_TOOLS = new Set([

@@ -12,10 +12,11 @@ import type { SceneEvent } from "./scene-schema.ts";
 
 import { setScenePresence } from "../actor/actor.ts";
 import { recordMemory } from "../knowledge/memory.ts";
-import { DEFAULT_ALLOWED_ACTIONS } from "./scene-beat-lifecycle.ts";
 import { settleOldestObligation } from "../ledger/obligations.ts";
 import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
+
+const DEFAULT_ALLOWED_ACTIONS = ["观察当前局势", "回应在场角色", "决定下一步行动"];
 
 export type { SceneEvent } from "./scene-schema.ts";
 

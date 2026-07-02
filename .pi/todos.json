@@ -574,25 +574,25 @@
     {
       "id": 101,
       "content": "Step 4: delete standalone tool and test, update registry",
-      "done": false,
+      "done": true,
       "created": 1782957777
     },
     {
       "id": 102,
       "content": "Step 5: audit — update session-audit.ts",
-      "done": false,
+      "done": true,
       "created": 1782957777
     },
     {
       "id": 103,
       "content": "Step 6: update guards and prompt files",
-      "done": false,
+      "done": true,
       "created": 1782957777
     },
     {
       "id": 104,
       "content": "Step 7: typecheck + test",
-      "done": false,
+      "done": true,
       "created": 1782957777
     }
   ]

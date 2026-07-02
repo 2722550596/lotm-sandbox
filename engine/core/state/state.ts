@@ -101,7 +101,7 @@ export interface PublicGameState {
   hooks: HookState[];
   relationshipSignals: RelationshipSignal[];
   actorImpressions: Record<ActorId, ActorImpression>;
-  /** 引擎内部使用：标记 commit_turn/progress_scene_beat 后等待 submit_direction_packet */
+  /** 引擎内部使用：标记 commit_turn 后等待 submit_direction_packet */
   pendingDirectionPacket?: boolean;
 }
 

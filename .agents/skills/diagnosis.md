@@ -4,7 +4,7 @@
 
 - 工具调用成功但状态没写
 - 状态重新加载后丢失
-- `commit_turn` 或 `progress_scene_beat` 被拒绝
+- `commit_turn` 被拒绝
 - 工具调用返回 schema validation 错误
 - GM 抱怨 "backstage pending" 卡住
 - 状态不一致或引用断裂
@@ -86,7 +86,7 @@ Obligations 是工具间协调的关键机制：
 
 1. 裁决工具产生 obligation（如 combat exchange 的 `recordObligation`）
 2. 对应领域事件落地后调用 `settleOldestObligation`
-3. `commit_turn`/`progress_scene_beat` 开始时检查 `assertNoOpenObligations`
+3. `commit_turn` 开始时检查 `assertNoOpenObligations`
 
 **8 种 obligation kind 及落地方式**：
 
