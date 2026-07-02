@@ -339,7 +339,12 @@ export async function revealSecret(
 
     // 收口关联 hook：找到 relatedSecretId 匹配已揭示秘密的 hook 并 retire
     for (const hook of draft.public.hooks) {
-      if (hook.relatedSecretId !== undefined && revealedIds.includes(hook.relatedSecretId)) {
+      if (
+        hook.relatedSecretId !== undefined &&
+        revealedIds.includes(hook.relatedSecretId) &&
+        hook.status !== "paid" &&
+        hook.status !== "retired"
+      ) {
         retireHook(draft, hook.id, `秘密已揭示（${event.actorId}）`);
       }
     }
