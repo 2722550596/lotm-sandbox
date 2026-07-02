@@ -45,8 +45,7 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 ### attempt_promotion
 
 序列晋升必须调用 `attempt_promotion`，绝不能绕过。引擎只裁决，不改状态。输出 outcome bands + narrative constraints + state landings（obligations ledger）。
-
-GM 在叙事完成后通过 `commit_turn` 清账：{ kind: "sequence" }、{ kind: "actor-condition" }、{ kind: "memory" }、scene event（add-threat / add-objective）、`reveal_secret` 等落地项。
+GM 在叙事完成后通过 `commit_turn` 清账：{ kind: "actor-condition" }、{ kind: "memory" }、scene event（add-threat / add-objective）、`reveal_secret` 等落地项。序列晋升（actor-sequence）已由 attempt_promotion 自动落地，不需走 commit_turn。
 
 晋升必须满足硬性前置条件，不可跳过：
 

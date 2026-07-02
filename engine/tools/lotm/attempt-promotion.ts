@@ -7,9 +7,8 @@
 //   必须落地的状态变更记入义务账本（obligations ledger）。
 //
 // GM 在叙事完成后通过 commit_turn 清账：
-//   - { kind: "sequence", event: { actorId, currentSequence, rank, pathway, ... } }
-//   - { kind: "memory", event: ... }
 //   - { kind: "actor-condition", event: ... }
+//   - { kind: "memory", event: ... }
 //   - scene event（add-threat / add-objective）
 //   - reveal_secret 工具
 // ---------------------------------------------------------------------------
