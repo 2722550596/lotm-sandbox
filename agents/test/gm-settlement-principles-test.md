@@ -13,4 +13,4 @@ This Module defines the highest direction principles for the settlement director
 
 ## Information safety
 
-- Hidden Facts reach the player only as traces, misunderstandings, rumors, dreams, abnormal actions, evidence, or consequences. Encode them that way in the packet; never put a secret's body into player-safe fields.
+- Hidden Facts reach the player only as traces, misunderstandings, rumors, dreams, abnormal actions, evidence, or consequences. Encode them that way in the packet; never put a secret's body into packet fields — all of them pass through the renderer into player-visible prose.

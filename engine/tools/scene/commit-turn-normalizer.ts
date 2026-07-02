@@ -4,7 +4,6 @@ import type { TurnCommitEvent, TurnCommitInput } from "../../core/turn/turn-comm
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
-import { parseActingEvent, parseSequenceInput } from "../../core/actor/actor-schema.ts";
 import { parseEconomyEvent } from "../../core/economy/economy-schema.ts";
 import { parseMemoryEvent } from "../../core/knowledge/memory-schema.ts";
 import { parseSceneEvent } from "../../core/scene/scene-schema.ts";
@@ -28,11 +27,9 @@ const TURN_EVENT_KINDS = [
   "scene",
   "actor-condition",
   "tracked-item",
-  "sequence",
   "economy",
   "memory",
   "outfit",
-  "acting",
 ] as const;
 
 export function normalizeTurnCommitInput(params: unknown): TurnCommitInput {
@@ -69,14 +66,6 @@ function normalizeTurnCommitEvent(value: unknown, summary: string): TurnCommitEv
           summary,
         ),
       };
-    case "sequence":
-      return {
-        kind: normalizedKind,
-        event: parseSequenceInput(
-          withReason(extractDomainEvent(event, "sequence.event"), summary),
-          "commit_turn sequence.event",
-        ),
-      };
     case "economy":
       return {
         kind: normalizedKind,
@@ -96,21 +85,9 @@ function normalizeTurnCommitEvent(value: unknown, summary: string): TurnCommitEv
           OUTFIT_TURN_VALIDATOR,
         ),
       };
-    case "acting":
-      // acting 只有 advance-acting 一种，工具层省略内层 kind，归一化时补回
-      return {
-        kind: normalizedKind,
-        event: parseActingEvent(
-          {
-            kind: "advance-acting",
-            ...withReason(extractDomainEvent(event, "acting.event"), summary),
-          },
-          "commit_turn acting.event",
-        ),
-      };
     default:
       throw new Error(
-        `非法 commit_turn event.kind: ${formatUnknown(event["kind"])}。允许: scene / actor-condition / tracked-item / sequence / economy / memory / outfit / acting。`,
+        `非法 commit_turn event.kind: ${formatUnknown(event["kind"])}。允许: scene / actor-condition / tracked-item / economy / memory / outfit。`,
       );
   }
 }

@@ -1,6 +1,4 @@
-import type { ActingResult } from "../actor/acting.ts";
 import type { ActorConditionEvent, ActorConditionEventResult } from "../actor/actor-condition.ts";
-import type { ActingEvent, SequenceInput } from "../actor/actor-schema.ts";
 import type { EconomyEvent, EconomyEventResult } from "../economy/economy.ts";
 import type { TrackedItemEvent } from "../inventory/tracked-item-schema.ts";
 import type { TrackedItemEventResult } from "../inventory/tracked-item.ts";
@@ -8,25 +6,17 @@ import type { MemoryEvent, MemoryEventResult } from "../knowledge/memory.ts";
 import type { SceneEvent, SceneEventResult } from "../scene/scene.ts";
 import type { OutfitState, State, TurnTimePolicy } from "../state/state.ts";
 
-import { recordActing } from "../actor/acting.ts";
-import { updateActorCondition } from "../actor/actor-condition.ts";
 import { changeActorOutfit } from "../actor/actor-impression.ts";
-import { upsertActor } from "../actor/actor.ts";
-import { collectBackstageDueNotices } from "../backstage/faction-clock.ts";
-import { updateEconomy } from "../economy/economy.ts";
 import { applyTrackedItemEvent } from "../inventory/tracked-item.ts";
+import { updateActorCondition } from "../actor/actor-condition.ts";
 import { recordMemory } from "../knowledge/memory.ts";
-import { assertNoOpenObligations, settleOldestObligation } from "../ledger/obligations.ts";
+import { updateEconomy } from "../economy/economy.ts";
 import { updateScene } from "../scene/scene.ts";
+import { assertNoOpenObligations } from "../ledger/obligations.ts";
+import { collectBackstageDueNotices } from "../backstage/faction-clock.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
 import { appendTurnLogEntry } from "./turn-log.ts";
 import { applyTurnTime } from "./turn-time.ts";
-
-export type SequenceEvent = SequenceInput;
-
-export interface SequenceEventResult {
-  message: string;
-}
 
 export interface OutfitTurnEvent {
   actorId: string;
@@ -34,15 +24,14 @@ export interface OutfitTurnEvent {
   reason: string;
 }
 
+
 export type TurnCommitEvent =
   | { kind: "scene"; event: SceneEvent }
   | { kind: "actor-condition"; event: ActorConditionEvent }
   | { kind: "tracked-item"; event: TrackedItemEvent }
-  | { kind: "sequence"; event: SequenceEvent }
   | { kind: "economy"; event: EconomyEvent }
   | { kind: "memory"; event: MemoryEvent }
-  | { kind: "outfit"; event: OutfitTurnEvent }
-  | { kind: "acting"; event: ActingEvent };
+  | { kind: "outfit"; event: OutfitTurnEvent };
 
 export interface TurnCommitInput {
   summary: string;
@@ -54,11 +43,9 @@ export type TurnCommitEventResult =
   | { kind: "scene"; result: SceneEventResult }
   | { kind: "actor-condition"; result: ActorConditionEventResult }
   | { kind: "tracked-item"; result: TrackedItemEventResult }
-  | { kind: "sequence"; result: SequenceEventResult }
   | { kind: "economy"; result: EconomyEventResult }
   | { kind: "memory"; result: MemoryEventResult }
-  | { kind: "outfit"; result: { message: string } }
-  | { kind: "acting"; result: ActingResult };
+  | { kind: "outfit"; result: { message: string } };
 export interface TurnCommitResult {
   message: string;
   results: TurnCommitEventResult[];
@@ -101,8 +88,6 @@ function applyTurnEvent(
       return { kind: event.kind, result: updateActorCondition(draft, event.event) };
     case "tracked-item":
       return { kind: event.kind, result: applyTrackedItemEvent(draft, event.event) };
-    case "sequence":
-      return { kind: event.kind, result: applySequenceEvent(draft, event.event, _summary) };
     case "economy":
       return { kind: event.kind, result: updateEconomy(draft, event.event) };
     case "memory":
@@ -117,25 +102,9 @@ function applyTurnEvent(
           event.event.reason,
         ),
       };
-    case "acting":
-      return { kind: event.kind, result: recordActing(draft, event.event) };
     default:
       throw new Error("unreachable turn commit event kind");
   }
-}
-
-function applySequenceEvent(
-  draft: State,
-  event: SequenceEvent,
-  reason: string,
-): SequenceEventResult {
-  const result = upsertActor(draft, {
-    kind: "upsert-sequence",
-    sequence: event,
-    reason,
-  });
-  settleOldestObligation(draft, ["sequence"]);
-  return { message: result.message };
 }
 
 function collectWarnings(draft: State, input: TurnCommitInput): string[] {

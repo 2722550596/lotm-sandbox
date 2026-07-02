@@ -85,7 +85,7 @@ export const submitDirectionPacketToolDefinition: DomainToolDefinition = {
     resolvedChanges: Type.Optional(
       Type.Array(Type.String(), {
         description:
-          "binding：本轮全部已结算机械事实，每条一句话；漏写=玩家看不到（叙事轮必填，至少 1 条）",
+          "binding：本轮全部已结算机械事实，每条一句话。这些事实会经渲染器全部呈现在玩家看到的正文中；漏写任何一条，玩家就不会在正文里看到它发生（叙事轮必填，至少 1 条）",
       }),
     ),
     npcStances: Type.Optional(
@@ -99,10 +99,12 @@ export const submitDirectionPacketToolDefinition: DomainToolDefinition = {
               "binding：本轮该 NPC 为追求 wants 而主动说出/做出的一个具体行为（一句台词/一个要求/一个肢体动作）；哪怕过场轮也要有。必须是该 NPC 自己的主动 beat，不是对玩家/环境的被动反应；缺位会让该 NPC 被渲染成被动布景",
           }),
           refusesToSay: Type.String({
-            description: "绝不说出口的话题；只描述拒说什么，严禁写入秘密本体",
+            description: "该 NPC 本轮绝不说出口的话题。只描述回避什么（例：『对殖民地的经历闭口不谈』），玩家能在正文中感知到这种回避；严禁写入秘密本体",
           }),
         }),
-        { description: "player-safe：在场重要 NPC 每人一条主动 beat（叙事轮必填，可为空数组）" },
+        { description:
+          "在场重要 NPC 每人一条主动 beat。这些条目完整传入渲染器→玩家可见正文：stance 决定行为基调，move 作为 NPC 本轮的具体行动逐字演给玩家看，refusesToSay 表明 NPC 回避的话题（玩家能感知到回避行为）。空数组表示本轮没有需要主动行动的 NPC；有在场重要 NPC 却不在 npcStances 也不在 npcOmissions，渲染器只能把他们写成被动布景（叙事轮必填）",
+        },
       ),
     ),
     npcOmissions: Type.Optional(
@@ -119,7 +121,7 @@ export const submitDirectionPacketToolDefinition: DomainToolDefinition = {
         }),
         {
           description:
-            "binding：重要在场 NPC 若本轮不主动行动，必须在此明确静置（reasonCode + playerSafeNote），否则会被渲染成被动布景",
+            "binding：重要在场 NPC 若本轮不主动行动，必须在此明确静置（reasonCode + playerSafeNote）。playerSafeNote 是玩家在正文里能看到的表象（如『站在门口沉默旁观』），严禁写入秘密本体。不在 npcStances 也不在 npcOmissions 的在场重要 NPC 会被渲染器当成被动布景",
         },
       ),
     ),
