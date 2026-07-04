@@ -17,7 +17,7 @@ import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts
 import { syncStateFromSessionManager } from "../../engine/core/state/session-persistence.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
 import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
-import { loadProseDigests, saveProseDigest } from "../../engine/direction/prose-digest-store.ts";
+import { loadProseDigests, migrateOldProseDigestFile, saveProseDigest } from "../../engine/direction/prose-digest-store.ts";
 import {
   buildLintRetryMessages,
   buildRendererMessages,
@@ -58,6 +58,8 @@ const IDLE_POLL_MAX_ATTEMPTS = 400;
  */
 export default function twoPassRenderExtension(pi: ExtensionAPI): void {
   pi.registerMessageRenderer(PROSE_CUSTOM_TYPE, renderProseMessage);
+  // 一次性迁移：旧 state/prose-digests.json → state/prose-digests/_legacy.json
+  migrateOldProseDigestFile();
   registerRerollCommand(pi, {
     render: (ctx, messages, packet, variantKey) => {
       syncStateFromSessionManager(ctx.sessionManager);
@@ -191,7 +193,7 @@ async function renderProse(
   const baseMessages = buildRendererMessages(
     loopMessages,
     packet,
-    loadProseDigests(),
+    loadProseDigests(ctx.sessionManager.getSessionId()),
     rendererNameEntries(state),
     state,
   );
@@ -534,7 +536,7 @@ async function writeTurnDigest(
         return;
       }
     }
-    saveProseDigest(pending.toolCallId, digest);
+    saveProseDigest(ctx.sessionManager.getSessionId(), pending.toolCallId, digest);
   } catch {
     // 静默：摘要缺位时渲染自动回退机械 packet 摘要。
   }

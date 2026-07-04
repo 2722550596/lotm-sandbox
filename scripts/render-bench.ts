@@ -27,7 +27,7 @@ import { join } from "node:path";
 
 import { lintFinalProse } from "../engine/audit/lint-rules.ts";
 import { parseSessionJsonl, reconstructActivePath } from "../engine/audit/session-audit.ts";
-import { loadProseDigests } from "../engine/direction/prose-digest-store.ts";
+import { loadFromFile } from "../engine/direction/prose-digest-store.ts";
 import {
   buildRendererMessages,
   findPendingDirectionPacket,
@@ -154,7 +154,7 @@ function collectBenchTurns(sessionPath: string, wanted: number): BenchTurn[] {
   });
 
   const systemPrompt = buildRendererSystemPrompt();
-  const digests = loadProseDigests(join(PROJECT_ROOT, "state", "prose-digests.json"));
+  const digests = loadFromFile(join(PROJECT_ROOT, "state", "prose-digests.json"));
   const turns: BenchTurn[] = [];
   for (const [ordinal, proseIndex] of proseIndices.entries()) {
     if (ordinal < proseIndices.length - wanted) continue;
