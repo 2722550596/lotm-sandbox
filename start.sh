@@ -94,16 +94,27 @@ fi
 export PI_CODING_AGENT_DIR=".pi/agent"
 export PI_CLAUDE_OAUTH_REINJECT_SCOPE=never
 
-# ---- pi-webui（基于 @firstpick/pi-package-webui） ----
-# 检测并启动 webui 服务器；端口 31415，已支持 EADDRINUSE 优雅处理。
-# webui RPC 子进程通过 env var 继承游戏扩展和技能。
-export PI_WEBUI_EXTENSION_PATHS="./extension.ts:./extensions/compaction/index.ts:./extensions/player-panel/index.ts:./extensions/player-choices/index.ts:./extensions/rewind/index.ts:./extensions/render/index.ts:$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts"
+#
+# ---- pi-webui（可选依赖） ----
+# packages/pi-webui/ 是本地 fork 开发的 webui（不在公开发行版中），
+# pi-intercom 是用户本地安装的跨进程通信扩展。
+# 以下代码检测它们是否存在，不存在时自动跳过，避免别人部署时报错。
 export PI_WEBUI_SKILL_PATHS="./skills"
 PI_WEBUI_HOST="127.0.0.1"
 PI_WEBUI_PORT=31415
 PI_WEBUI_URL="http://$PI_WEBUI_HOST:$PI_WEBUI_PORT"
 WEBUI_PID=
 
+# 构建条件扩展列表
+EXTRA_EXTENSIONS=()
+if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts" ]; then
+  EXTRA_EXTENSIONS+=(-e "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts")
+  echo "✓ pi-intercom 扩展已加载"
+fi
+if [ -d "./packages/pi-webui" ]; then
+  EXTRA_EXTENSIONS+=(-e "./packages/pi-webui/index.ts")
+  echo "✓ pi-webui 扩展已加载"
+fi
 # 脚本退出时关闭 webui
 cleanup_webui() {
   if [ -n "$WEBUI_PID" ] && kill -0 "$WEBUI_PID" 2>/dev/null; then
@@ -116,20 +127,32 @@ cleanup_webui() {
 }
 trap cleanup_webui EXIT
 
-if curl -sf "$PI_WEBUI_URL/api/health" >/dev/null 2>&1; then
-  echo "✓ webui 已在运行: $PI_WEBUI_URL"
+if [ -d "./packages/pi-webui" ]; then
+  # 设置 webui 扩展路径（base 路径 + 可选的 intercom）
+  PI_WEBUI_BASE_PATHS="./extension.ts:./extensions/compaction/index.ts:./extensions/player-panel/index.ts:./extensions/player-choices/index.ts:./extensions/rewind/index.ts:./extensions/render/index.ts"
+  if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts" ]; then
+    export PI_WEBUI_EXTENSION_PATHS="$PI_WEBUI_BASE_PATHS:$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts"
+  else
+    export PI_WEBUI_EXTENSION_PATHS="$PI_WEBUI_BASE_PATHS"
+  fi
+
+  if curl -sf "$PI_WEBUI_URL/api/health" >/dev/null 2>&1; then
+    echo "✓ webui 已在运行: $PI_WEBUI_URL"
+  else
+    echo "ℹ 启动 webui 服务器..."
+    node ./packages/pi-webui/bin/pi-webui.mjs \
+      --host "$PI_WEBUI_HOST" --port "$PI_WEBUI_PORT" --cwd "$PWD" \
+      &>/dev/null &
+    WEBUI_PID=$!
+    # 等几秒让服务就绪
+    for i in $(seq 1 10); do
+      if curl -sf "$PI_WEBUI_URL/api/health" >/dev/null 2>&1; then break; fi
+      sleep 0.5
+    done
+    echo "✓ webui 已启动: $PI_WEBUI_URL"
+  fi
 else
-  echo "ℹ 启动 webui 服务器..."
-  node ./packages/pi-webui/bin/pi-webui.mjs \
-    --host "$PI_WEBUI_HOST" --port "$PI_WEBUI_PORT" --cwd "$PWD" \
-    &>/dev/null &
-  WEBUI_PID=$!
-  # 等几秒让服务就绪
-  for i in $(seq 1 10); do
-    if curl -sf "$PI_WEBUI_URL/api/health" >/dev/null 2>&1; then break; fi
-    sleep 0.5
-  done
-  echo "✓ webui 已启动: $PI_WEBUI_URL"
+  echo "ℹ packages/pi-webui 未安装，跳过 webui 启动（仅影响浏览器 UI，不影响游戏运行）"
 fi
 pi_exit=0
 pi \
@@ -141,8 +164,7 @@ pi \
   -e ./extensions/player-choices/index.ts \
   -e ./extensions/rewind/index.ts \
   -e ./extensions/render/index.ts \
-  -e $HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts \
-  -e ./packages/pi-webui/index.ts \
+  "${EXTRA_EXTENSIONS[@]}" \
   --session-dir ./sessions \
   --no-context-files \
   "$@" || pi_exit=$?
