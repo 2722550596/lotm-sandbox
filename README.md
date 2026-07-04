@@ -73,6 +73,10 @@ pnpm install
 # 复制环境变量模板（必须！否则 lookup 和秘密揭示功能不可用）
 cp .env.example .env
 # 然后编辑 .env，填入 SILICONFLOW_API_KEY（从 https://cloud.siliconflow.cn 获取）
+#
+# ⚠️ 注意：这个 key 是给游戏引擎内部的 lookup/秘密揭示用的，
+#    和 pi 自己用的 LLM API 是两回事，不要搞混。
+#    下方「Pi 自身 API 配置」有详细说明。
 
 # 启动
 ./start.sh
@@ -94,7 +98,11 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\start.ps1
 ```
 
-首次启动会看到 pi 的界面。如果没登录 pi，先跑 `/login` 或按提示配置 API provider。
+首次启动会看到 pi 的界面。如果 pi 提示没有可用模型（界面像"卡住"），说明还没给 pi 配 API。
+
+> ⚠️ 常见误解：`.env` 里填的 `SILICONFLOW_API_KEY` 是游戏引擎内部工具用的，
+> **不是** pi 自己的 LLM API Key。pi 本身需要独立的 LLM API 才能跑游戏。
+> 详见下方「Pi 自身 API 配置」。
 
 然后在输入框里输入：
 
@@ -122,6 +130,161 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 `/status` 和 `/inventory` 是 UI 面板，不是剧情动作；它们用于命令行里查看自己当前知道/持有的东西。
 
 看到右下角类似 `0.0%` 和一个方块时，那通常是 pi 的上下文/状态 UI，不是下载进度条。首次启动如果没有 API/model 配置，界面可能看起来像"卡住"，但实际是在等你输入命令或配置模型渠道。
+
+## Pi 自身 API 配置
+
+`.env` 里的 API Key 只是给游戏引擎内部工具（SiliconFlow RAG）用的，
+**pi 自己需要一套完全独立的 LLM API 配置**才能驱动游戏。
+如果你从来没给 pi 配过 API，首次启动会提示没有可用模型。
+
+有三种方式给 pi 配置 API：
+
+---
+
+### 方式一：Subscription / `/login`（推荐，有手就行）
+
+如果你有 ChatGPT Plus/Pro、Claude Pro/Max 或 GitHub Copilot 订阅，
+直接在 pi 终端输入 `/login`，选择你的订阅商，浏览器授权即可。
+
+```txt
+/login
+# 然后选择 ChatGPT / Claude / GitHub Copilot
+```
+
+---
+
+### 方式二：API Key（`~/.pi/agent/auth.json`）
+
+如果你走 API Key（自充钱、走代理、用国内渠道等），
+可以用 `/login` 选择对应 provider 输入 Key，
+或者直接编辑 `~/.pi/agent/auth.json`，pi 会读这个文件：
+
+```json
+{
+  "anthropic": { "type": "api_key", "key": "sk-ant-..." },
+  "openai": { "type": "api_key", "key": "sk-..." },
+  "deepseek": { "type": "api_key", "key": "sk-..." }
+}
+```
+
+也可以用环境变量（设好后直接 `pi` 启动即可）：
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+pi
+```
+
+常见 Provider 的配置键：
+
+| Provider | `auth.json` key | 环境变量 |
+|----------|----------------|----------|
+| Anthropic | `"anthropic"` | `ANTHROPIC_API_KEY` |
+| OpenAI | `"openai"` | `OPENAI_API_KEY` |
+| DeepSeek | `"deepseek"` | `DEEPSEEK_API_KEY` |
+| Google Gemini | `"google"` | `GEMINI_API_KEY` |
+| OpenRouter | `"openrouter"` | `OPENROUTER_API_KEY` |
+| Together AI | `"together"` | `TOGETHER_API_KEY` |
+
+完整列表见[官方文档](https://github.com/earendil-works/pi-mono/tree/main/docs/providers.md)。
+
+Key 还支持从命令读取（如从密码管理器）：
+
+```json
+{
+  "anthropic": { "type": "api_key", "key": "!security find-generic-password -ws 'anthropic'" }
+}
+```
+
+---
+
+### 方式三：自定义 Provider（`~/.pi/agent/models.json`）
+
+如果你用 Ollama / vLLM / LM Studio 等本地模型，或走自定义代理/中转服务，
+可以在 `~/.pi/agent/models.json` 里注册自定义 provider。
+编辑后不用重启，按 `Ctrl+L` 或输 `/model` 即可看到新模型。
+
+#### 本地模型模板（Ollama / LM Studio）
+
+```json
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://localhost:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        { "id": "qwen2.5-coder:14b" },
+        { "id": "llama3.1:8b" }
+      ]
+    }
+  }
+}
+```
+
+`apiKey` 填什么都行（Ollama 忽略），关键是 `baseUrl` 和 `models` 里的 `id`。
+
+#### 自定义代理 / 中转 API 模板
+
+```json
+{
+  "providers": {
+    "my-proxy": {
+      "baseUrl": "https://my-proxy.example.com/v1",
+      "api": "openai-completions",
+      "apiKey": "$MY_PROXY_API_KEY",
+      "models": [
+        { "id": "gpt-4o" },
+        { "id": "claude-sonnet-4", "api": "anthropic-messages" }
+      ]
+    }
+  }
+}
+```
+
+`"$MY_PROXY_API_KEY"` 会读取同名的环境变量。
+也可以用 `"!command"` 语法执行命令取 Key（如从密码管理器读取）。
+
+#### 覆盖内置 Provider 的 Base URL
+
+如果你有现成的 Anthropic / OpenAI 代理，不改模型列表：
+
+```json
+{
+  "providers": {
+    "anthropic": {
+      "baseUrl": "https://my-anthropic-proxy.example.com/v1"
+    }
+  }
+}
+```
+
+所有内置 Anthropic 模型保持不变，只是请求改走你的代理。
+
+#### 常用配置字段速查
+
+| 字段 | 说明 |
+|------|------|
+| `baseUrl` | API 端点地址 |
+| `api` | 协议类型：`openai-completions`（最通用）、`anthropic-messages`、`google-generative-ai` |
+| `apiKey` | API Key，支持字面量、环境变量引用（`$VAR`）、命令执行（`!cmd`） |
+| `headers` | 额外请求头（可选） |
+| `models[].id` | 模型标识符（必填） |
+| `models[].reasoning` | 是否支持思考/推理（默认 `false`） |
+| `models[].contextWindow` | 上下文窗口大小（默认 128000） |
+| `models[].cost` | 每百万 token 价格（用于计费统计，不填则为 0） |
+
+---
+
+### 怎么验证配好了？
+
+在终端里直接跑 `pi --list-models`，看能不能列出模型。
+或者直接 `./start.sh` 启动游戏，如果 pi 界面右下角显示了当前模型名（如 `claude-sonnet-4`），
+就说明配好了。如果提示"No models available"，说明还没配好 pi 的 API。
 
 ## Environment
 
