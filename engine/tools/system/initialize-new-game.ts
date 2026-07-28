@@ -7,6 +7,8 @@ import {
   initializeNewGame,
   parseNewGameInitializationInput,
 } from "../../core/init/initialize-new-game.ts";
+import { SITUATION_KIND_SCHEMA } from "../../core/state/state-enum-schemas.ts";
+import { LOCATION_STATE_SCHEMA } from "../../core/turn/turn-time-schema.ts";
 import { resultDetails, runDomainEventTool } from "./domain-tool-runner.ts";
 
 function buildInitializationMessage(result: Awaited<ReturnType<typeof initializeNewGame>>): string {
@@ -40,7 +42,7 @@ export function initializeNewGameTool(params: unknown, sessionManager: unknown):
 export const initializeNewGameToolDefinition: DomainToolDefinition = {
   name: "initialize_new_game",
   description:
-    "初始化新游戏 Game State 的单入口 recipe：重置 state、配置 scenario、写 protagonist、设在场 actor、必要时配 protagonist 序列隐藏秘密。\n\n" +
+    "初始化新游戏 Game State 的单入口 recipe：重置 state、配置 scenario（可覆盖 preset 的地点/态势）、写 protagonist、设在场 actor、必要时配 protagonist 序列隐藏秘密。\n\n" +
     "【使用边界】\n" +
     "- /skill:start-game 已定好时间线/立场/开场身份，进正式剧情前一次性建立可运行 state\n" +
     "- protagonist 是非凡者且序列秘密需 hidden-canonical secret slot\n\n" +
@@ -64,6 +66,8 @@ export const initializeNewGameToolDefinition: DomainToolDefinition = {
       startedAt: Type.Optional(Type.String({ description: "UTC ISO instant" })),
       currentAt: Type.Optional(Type.String({ description: "UTC ISO instant" })),
       reason: Type.Optional(Type.String()),
+      location: Type.Optional(LOCATION_STATE_SCHEMA),
+      situation: Type.Optional(SITUATION_KIND_SCHEMA),
     }),
     protagonist: Type.Unknown({
       description:

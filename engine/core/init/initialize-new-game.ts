@@ -30,8 +30,10 @@ import {
   PATHWAY_ID_SCHEMA,
   PROMOTION_SYSTEM_SCHEMA,
   SEQUENCE_RANK_SCHEMA,
+  SITUATION_KIND_SCHEMA,
   stringEnumSchema,
 } from "../state/state-enum-schemas.ts";
+import { LOCATION_STATE_SCHEMA } from "../turn/turn-time-schema.ts";
 import { createId } from "../utils/ids.ts";
 import {
   assertNonEmptyString,
@@ -144,6 +146,8 @@ const NEW_GAME_SCENARIO_INPUT_SCHEMA = Type.Object({
   startedAt: Type.Optional(Type.String({ minLength: 1 })),
   currentAt: Type.Optional(Type.String({ minLength: 1 })),
   reason: Type.Optional(Type.String({ minLength: 1 })),
+  location: Type.Optional(LOCATION_STATE_SCHEMA),
+  situation: Type.Optional(SITUATION_KIND_SCHEMA),
 });
 
 const NEW_GAME_PRESENCE_INPUT_SCHEMA = Type.Object({
