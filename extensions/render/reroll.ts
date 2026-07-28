@@ -57,11 +57,12 @@ export type RerollTarget =
   | { kind: "no-packet"; proseEntryId: string };
 
 export function registerRerollCommand(pi: ExtensionAPI, callbacks: RerollCommandCallbacks): void {
-  pi.registerCommand("reroll", {
-    description: "重新渲染最后一条正文：保留结算事实，只替换可见小说文本",
+  pi.registerCommand("reroll-narrative", {
+    description:
+      "重新渲染最后一条正文：保留结算事实，只替换可见小说文本（改名自 /reroll 以免冲突）",
     handler: async (args, ctx) => {
       if (args.trim() !== "") {
-        ctx.ui.notify("用法：/reroll — 只重 roll 当前最后一条正文，不接参数", "warning");
+        ctx.ui.notify("用法：/reroll-narrative — 只重 roll 当前最后一条正文，不接参数", "warning");
         return;
       }
       await rerollLastProse(pi, callbacks, ctx);
@@ -126,7 +127,7 @@ async function rerollLastProse(
   ctx: ExtensionCommandContext,
 ): Promise<void> {
   if (!ctx.isIdle()) {
-    ctx.ui.notify("当前仍在生成；等本轮正文落地后再 /reroll", "warning");
+    ctx.ui.notify("当前仍在生成；等本轮正文落地后再 /reroll-narrative", "warning");
     return;
   }
 

@@ -1,4 +1,0 @@
-{
-  "packages": ["npm:pi-subagents"],
-  "npmCommand": ["pnpm"]
-}

@@ -97,7 +97,7 @@ export PI_CLAUDE_OAUTH_REINJECT_SCOPE=never
 #
 # ---- pi-webui（可选依赖） ----
 # packages/pi-webui/ 是本地 fork 开发的 webui（不在公开发行版中），
-# pi-intercom 是用户本地安装的跨进程通信扩展。
+# pi-intercom-rp 是用户本地安装的跨进程通信扩展。
 # 以下代码检测它们是否存在，不存在时自动跳过，避免别人部署时报错。
 export PI_WEBUI_SKILL_PATHS="./skills"
 PI_WEBUI_HOST="127.0.0.1"
@@ -107,9 +107,9 @@ WEBUI_PID=
 
 # 构建条件扩展列表
 EXTRA_EXTENSIONS=()
-if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts" ]; then
-  EXTRA_EXTENSIONS+=(-e "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts")
-  echo "✓ pi-intercom 扩展已加载"
+if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom-rp/index.ts" ]; then
+  EXTRA_EXTENSIONS+=(-e "$HOME/.pi/agent/npm/node_modules/pi-intercom-rp/index.ts")
+  echo "✓ pi-intercom-rp 扩展已加载"
 fi
 if [ -d "./packages/pi-webui" ]; then
   EXTRA_EXTENSIONS+=(-e "./packages/pi-webui/index.ts")
@@ -130,8 +130,8 @@ trap cleanup_webui EXIT
 if [ -d "./packages/pi-webui" ]; then
   # 设置 webui 扩展路径（base 路径 + 可选的 intercom）
   PI_WEBUI_BASE_PATHS="./extension.ts:./extensions/compaction/index.ts:./extensions/player-panel/index.ts:./extensions/player-choices/index.ts:./extensions/rewind/index.ts:./extensions/render/index.ts"
-  if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts" ]; then
-    export PI_WEBUI_EXTENSION_PATHS="$PI_WEBUI_BASE_PATHS:$HOME/.pi/agent/npm/node_modules/pi-intercom/index.ts"
+  if [ -f "$HOME/.pi/agent/npm/node_modules/pi-intercom-rp/index.ts" ]; then
+    export PI_WEBUI_EXTENSION_PATHS="$PI_WEBUI_BASE_PATHS:$HOME/.pi/agent/npm/node_modules/pi-intercom-rp/index.ts"
   else
     export PI_WEBUI_EXTENSION_PATHS="$PI_WEBUI_BASE_PATHS"
   fi

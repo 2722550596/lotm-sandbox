@@ -4,6 +4,7 @@ packages:
 allowBuilds:
   "@google/genai": true
   esbuild: false
+  koffi: false
   protobufjs: true
 
 minimumReleaseAge: 0

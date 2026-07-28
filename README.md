@@ -118,11 +118,11 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 /status     查看当前时间、地点、目标、威胁和资源
 /inventory  查看当前玩家可见资金与物品
 /compact    手动压缩聊天上下文（项目已接管压缩策略，自动压缩同样生效）
-/reroll     重新渲染最后一条正文：保留结算事实，只替换可见小说文本
+/reroll-narrative  重新渲染最后一条正文：保留结算事实，只替换可见小说文本
 /fuck [N]   快速回退到倒数第 N 次输入（默认 1）：中断生成、删除废弃分支、原输入回填输入框
 ```
 
-`/reroll` 是"正文不满意重写"：只重跑双 pass 的渲染段，不重新结算、
+`/reroll-narrative` 是"正文不满意重写"：只重跑双 pass 的渲染段，不重新结算、
 不推进时间、不改游戏状态；它只能作用于当前最后一条正文。
 
 `/fuck` 是"坏输入急救"：刚发出去就后悔时用它回到输入前一刻，游戏状态会自动回滚到回退点快照。被废弃的分支会从 session 文件中物理删除，不可恢复；如果想保留分支对比不同走向，请用 pi 自带的 `/tree`。
@@ -177,14 +177,14 @@ pi
 
 常见 Provider 的配置键：
 
-| Provider | `auth.json` key | 环境变量 |
-|----------|----------------|----------|
-| Anthropic | `"anthropic"` | `ANTHROPIC_API_KEY` |
-| OpenAI | `"openai"` | `OPENAI_API_KEY` |
-| DeepSeek | `"deepseek"` | `DEEPSEEK_API_KEY` |
-| Google Gemini | `"google"` | `GEMINI_API_KEY` |
-| OpenRouter | `"openrouter"` | `OPENROUTER_API_KEY` |
-| Together AI | `"together"` | `TOGETHER_API_KEY` |
+| Provider      | `auth.json` key | 环境变量             |
+| ------------- | --------------- | -------------------- |
+| Anthropic     | `"anthropic"`   | `ANTHROPIC_API_KEY`  |
+| OpenAI        | `"openai"`      | `OPENAI_API_KEY`     |
+| DeepSeek      | `"deepseek"`    | `DEEPSEEK_API_KEY`   |
+| Google Gemini | `"google"`      | `GEMINI_API_KEY`     |
+| OpenRouter    | `"openrouter"`  | `OPENROUTER_API_KEY` |
+| Together AI   | `"together"`    | `TOGETHER_API_KEY`   |
 
 完整列表见[官方文档](https://github.com/earendil-works/pi-mono/tree/main/docs/providers.md)。
 
@@ -217,10 +217,7 @@ Key 还支持从命令读取（如从密码管理器）：
         "supportsDeveloperRole": false,
         "supportsReasoningEffort": false
       },
-      "models": [
-        { "id": "qwen2.5-coder:14b" },
-        { "id": "llama3.1:8b" }
-      ]
+      "models": [{ "id": "qwen2.5-coder:14b" }, { "id": "llama3.1:8b" }]
     }
   }
 }
@@ -237,10 +234,7 @@ Key 还支持从命令读取（如从密码管理器）：
       "baseUrl": "https://my-proxy.example.com/v1",
       "api": "openai-completions",
       "apiKey": "$MY_PROXY_API_KEY",
-      "models": [
-        { "id": "gpt-4o" },
-        { "id": "claude-sonnet-4", "api": "anthropic-messages" }
-      ]
+      "models": [{ "id": "gpt-4o" }, { "id": "claude-sonnet-4", "api": "anthropic-messages" }]
     }
   }
 }
@@ -267,16 +261,16 @@ Key 还支持从命令读取（如从密码管理器）：
 
 #### 常用配置字段速查
 
-| 字段 | 说明 |
-|------|------|
-| `baseUrl` | API 端点地址 |
-| `api` | 协议类型：`openai-completions`（最通用）、`anthropic-messages`、`google-generative-ai` |
-| `apiKey` | API Key，支持字面量、环境变量引用（`$VAR`）、命令执行（`!cmd`） |
-| `headers` | 额外请求头（可选） |
-| `models[].id` | 模型标识符（必填） |
-| `models[].reasoning` | 是否支持思考/推理（默认 `false`） |
-| `models[].contextWindow` | 上下文窗口大小（默认 128000） |
-| `models[].cost` | 每百万 token 价格（用于计费统计，不填则为 0） |
+| 字段                     | 说明                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `baseUrl`                | API 端点地址                                                                           |
+| `api`                    | 协议类型：`openai-completions`（最通用）、`anthropic-messages`、`google-generative-ai` |
+| `apiKey`                 | API Key，支持字面量、环境变量引用（`$VAR`）、命令执行（`!cmd`）                        |
+| `headers`                | 额外请求头（可选）                                                                     |
+| `models[].id`            | 模型标识符（必填）                                                                     |
+| `models[].reasoning`     | 是否支持思考/推理（默认 `false`）                                                      |
+| `models[].contextWindow` | 上下文窗口大小（默认 128000）                                                          |
+| `models[].cost`          | 每百万 token 价格（用于计费统计，不填则为 0）                                          |
 
 ---
 

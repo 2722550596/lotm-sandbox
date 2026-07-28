@@ -55,7 +55,7 @@ void test("findLatestChoiceSet reads actions from the leaf prose", () => {
 });
 
 void test("findLatestChoiceSet reads actions from a rerolled prose entry", () => {
-  // 回归：/reroll 落盘的 details 必须保留 suggestedActions，否则 widget 显示候选
+  // 回归：/reroll-narrative 落盘的 details 必须保留 suggestedActions，否则 widget 显示候选
   // 而选择报「无可用候选」。
   const branch = [
     messageEntry("m0", "root"),

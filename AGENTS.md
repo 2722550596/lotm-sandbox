@@ -119,8 +119,7 @@ type SceneResult = {
 
 // ✅ 合格
 type SceneResult =
-  | { kind: "success"; settlement: Settlement; events: Event[] }
-  | { kind: "failure"; error: string };
+  { kind: "success"; settlement: Settlement; events: Event[] } | { kind: "failure"; error: string };
 ```
 
 ---
@@ -363,20 +362,20 @@ pnpm format && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test
 
 以下模式在本项目中不存在，代码审查时看到即打回：
 
-| 反模式                       | 为什么禁止                                                                          |
+| 反模式 | 为什么禁止 |
 | ---------------------------- | ----------------------------------------------------------------------------------- | ------------- | -------------- | --- | ----------------------------- |
-| `Record<string, any>`        | any 瘟疫的载体。定义具体类型                                                        |
-| `as unknown as T`            | 双重断言等于放弃类型系统。写 type guard                                             |
-| `setTimeout` 做异步控制      | pi 的事件循环不受你控制。用 hook/工具返回值驱动                                     |
-| mutation of function params  | 纯函数不收副作用。clone 后改                                                        |
-| `!!` 做布尔转换              | 写 `Boolean(x)`——意图明确                                                           |
-| `x                           |                                                                                     | defaultValue` | 用 `??` 而非 ` |     | `，除非你真的想捕获 `""`和`0` |
-| 导出 mutable 对象            | `export const X = {}` 是全局可变状态。用函数包装                                    |
-| magic number / magic string  | 3.14 → `const TAX_RATE = 0.0314`。`"battle"` → `const SceneKind = { ... } as const` |
-| 深层嵌套三元                 | `a ? b ? c : d : e` → 用 if-else 或 lookup table                                    |
-| `import * as X` 命名空间导入 | 除非是 `import * as fs from "node:fs"` 这种标准库，否则具名导入                     |
-| 裸 JSON Patch 修正常规玩法   | 用领域工具；没有工具就新增窄领域事件                                                |
-| 把 debug 工具当正常 GM 工具  | debug 只用于开发修档，正常剧情必须走领域工具                                        |
+| `Record<string, any>` | any 瘟疫的载体。定义具体类型 |
+| `as unknown as T` | 双重断言等于放弃类型系统。写 type guard |
+| `setTimeout` 做异步控制 | pi 的事件循环不受你控制。用 hook/工具返回值驱动 |
+| mutation of function params | 纯函数不收副作用。clone 后改 |
+| `!!` 做布尔转换 | 写 `Boolean(x)`——意图明确 |
+| `x                           |                                                                                     | defaultValue` | 用 `??` 而非 `|     |`，除非你真的想捕获 `""`和`0` |
+| 导出 mutable 对象 | `export const X = {}` 是全局可变状态。用函数包装 |
+| magic number / magic string | 3.14 → `const TAX_RATE = 0.0314`。`"battle"` → `const SceneKind = { ... } as const` |
+| 深层嵌套三元 | `a ? b ? c : d : e` → 用 if-else 或 lookup table |
+| `import * as X` 命名空间导入 | 除非是 `import * as fs from "node:fs"` 这种标准库，否则具名导入 |
+| 裸 JSON Patch 修正常规玩法 | 用领域工具；没有工具就新增窄领域事件 |
+| 把 debug 工具当正常 GM 工具 | debug 只用于开发修档，正常剧情必须走领域工具 |
 
 ---
 

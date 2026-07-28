@@ -17,7 +17,11 @@ import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts
 import { syncStateFromSessionManager } from "../../engine/core/state/session-persistence.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
 import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
-import { loadProseDigests, migrateOldProseDigestFile, saveProseDigest } from "../../engine/direction/prose-digest-store.ts";
+import {
+  loadProseDigests,
+  migrateOldProseDigestFile,
+  saveProseDigest,
+} from "../../engine/direction/prose-digest-store.ts";
 import {
   buildLintRetryMessages,
   buildRendererMessages,
