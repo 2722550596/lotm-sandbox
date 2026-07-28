@@ -308,7 +308,6 @@ function setLocation(
   draft: State,
   event: Extract<SceneEvent, { kind: "set-location" }>,
 ): SceneEventResult {
-  assertActiveStoryWindow(draft, "set-location");
   draft.public.scene.location = event.location;
   draft.public.scene.lastResolvedAt = draft.public.clock.currentAt;
   return { message: "地点已修正。" };
@@ -317,7 +316,6 @@ function setSituation(
   draft: State,
   event: Extract<SceneEvent, { kind: "set-situation" }>,
 ): SceneEventResult {
-  assertActiveStoryWindow(draft, "set-situation");
   draft.public.scene.situation = event.situation;
   return { message: `态势已更新为 ${event.situation}。` };
 }
